@@ -52,7 +52,6 @@
             // 
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
-            "Многоугольник",
             "Fg1",
             "Zv"});
             this.comboBox1.Location = new System.Drawing.Point(109, 376);

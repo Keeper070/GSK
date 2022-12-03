@@ -16,6 +16,8 @@ namespace GSK2
         Pen DrawPen = new Pen(Color.Black, 1);
         List<Point> VertexList = new List<Point>();
         bool SplineType = false;
+        bool FlagFigure = false;
+
 
         int yMin;
         int yMax;
@@ -26,6 +28,7 @@ namespace GSK2
             g = pictureBox1.CreateGraphics();
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         }
+
         static double Factorial(int n)
         {
             double x = 1;
@@ -33,6 +36,8 @@ namespace GSK2
                 x *= i;
             return x;
         }
+
+        //Кубический сплайн
         public void DrawCubeSpline(Pen DrPen, List<Point> P)
         {
             PointF[] L = new PointF[4]; // Матрица вещественных коэффициентов
@@ -67,28 +72,78 @@ namespace GSK2
                 t += dt;
             }
         }
+
+
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            VertexList.Add(new Point(e.X, e.Y));
-            g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
-            if (VertexList.Count > 1)
-                g.DrawLine(DrawPen, VertexList[VertexList.Count - 2], VertexList[VertexList.Count - 1]);
-            
-            if (SplineType == true && VertexList.Count >= 4) 
+            if (FlagFigure)
+            {
+                CreateFg1(e);
+                VertexList = figure.Last();
+                FirstAlgoritm(e);
+            }
+            else if (MouseButtons == MouseButtons.Left)
+            {
+                VertexList.Add(new Point(e.X, e.Y));
+                g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
+                if (VertexList.Count > 1)
+                {
+                    g.DrawLine(DrawPen, VertexList[VertexList.Count - 2], VertexList[VertexList.Count - 1]);
+                }
+            }
+
+            else if (SplineType == true && VertexList.Count >= 4)
             {
                 DrawCubeSpline(DrawPen, VertexList);
             }
+            else if (MouseButtons == MouseButtons.Right)
+            {
+                FirstAlgoritm(e);
+            }
+
         }
+
+        //алгоритм закрашивание фигуры
         private void FirstAlgoritm(MouseEventArgs e)
         {
-            int xb;
-            for (int i = yMin; i <= yMax; i++)
+            int k;
+            List<int> xb = new List<int>();
+            SearchMinAndMax();
+            for (int Y = yMin; Y <= yMax; Y++)
             {
-                xb = 0;
+                xb.Clear();
+                for (int i = 0; i < VertexList.Count - 1; i++)
+                {
+                    if (i < VertexList.Count)
+                    {
+                        k = i + 1;
+                    }
+                    else k = 1;
 
+                    if (VertexList[i].Y < Y && VertexList[k].Y >= Y || VertexList[i].Y >= Y && VertexList[k].Y < Y)
+                    {
+                        var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y + VertexList[k].X * VertexList[i].Y)
+                          / (VertexList[k].Y - VertexList[i].Y);
+                        xb.Add(x);
+                    }
+
+                }
+                if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y || VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
+                {
+                    var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) - VertexList[VertexList.Count - 1].X * VertexList[0].Y + VertexList[0].X * VertexList[VertexList.Count - 1].Y)
+                      / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
+                    xb.Add(x);
+                }
+                xb.Sort();
+                for (int i = 0; i < xb.Count; i += 2)
+                {
+                    g.DrawLine(DrawPen, new Point(xb[i], Y), new Point(xb[i + 1], Y));
+                }
 
             }
         }
+
+        // Поиск Ymin и Ymax
         private void SearchMinAndMax()
         {
             yMin = VertexList[0].Y;
@@ -107,6 +162,26 @@ namespace GSK2
                 }
             }
         }
+
+        private List<List<Point>> figure = new List<List<Point>>();
+
+        //создание Фигуры 1
+        private void CreateFg1(MouseEventArgs e)
+        {
+            var fg = new List<Point>()
+            {
+                new Point(e.X - 150, e.Y + 100),
+                new Point(e.X - 150, e.Y), 
+                new Point(e.X - 50 , e.Y),
+                new Point(e.X, e.Y-100),
+                new Point(e.X+ 50, e.Y),
+                new Point(e.X+150, e.Y),
+                new Point(e.X + 150, e.Y + 100)
+            };
+            figure.Add(fg);
+
+        }
+
         private void pictureBox1_Click(object sender, EventArgs e)
         {
 
@@ -139,7 +214,15 @@ namespace GSK2
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
+            switch (comboBox1.SelectedIndex)
+            {
+                case 0:
 
+                    break;
+
+
+            }
+            FlagFigure = true;
         }
 
         private void button1_Click(object sender, EventArgs e)
