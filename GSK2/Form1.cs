@@ -29,11 +29,10 @@ namespace GSK2
         public Form1()
         {
             InitializeComponent();
-            buff = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            buff = new Bitmap(pictureBox1.Width, pictureBox1.Height); // для понимания кода название перменной bitmap считаю лучше, buff часто где используешь и можешь запутаться
             g = Graphics.FromImage(buff);
-            g = pictureBox1.CreateGraphics();
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            
+            // g = pictureBox1.CreateGraphics(); -- не нужно создавать, ты уже bitmap туда закинул
+            // g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; -- зачем?
         }
 
         static double Factorial(int n)
@@ -72,8 +71,8 @@ namespace GSK2
             {
                 xt = ((L[0].X * t + L[1].X) * t + L[2].X) * t + L[3].X;
                 yt = ((L[0].Y * t + L[1].Y) * t + L[2].Y) * t + L[3].Y;
-                Pt.X = (int)Math.Round(xt);
-                Pt.Y = (int)Math.Round(yt);
+                Pt.X = (int) Math.Round(xt);
+                Pt.Y = (int) Math.Round(yt);
                 g.DrawLine(DrPen, Ppred, Pt);
                 Ppred = Pt;
                 t += dt;
@@ -88,14 +87,12 @@ namespace GSK2
                 CreateFg1(e);
                 VertexList = figure.Last();
                 FirstAlgoritm(e);
-
             }
             else if (!FlagFigure && SplineType == false)
             {
                 CreateZv(e);
                 VertexList = figure.Last();
                 FirstAlgoritm(e);
-
             }
             else if (MouseButtons == MouseButtons.Left)
             {
@@ -115,8 +112,6 @@ namespace GSK2
             {
                 FirstAlgoritm(e);
             }
-
-
         }
 
         //алгоритм закрашивание фигуры (внутри)
@@ -138,24 +133,30 @@ namespace GSK2
 
                     if (VertexList[i].Y < Y && VertexList[k].Y >= Y || VertexList[i].Y >= Y && VertexList[k].Y < Y)
                     {
-                        var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y + VertexList[k].X * VertexList[i].Y)
-                          / (VertexList[k].Y - VertexList[i].Y);
+                        var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y +
+                                  VertexList[k].X * VertexList[i].Y)
+                                / (VertexList[k].Y - VertexList[i].Y);
                         xb.Add(x);
                     }
-
                 }
-                if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y || VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
+
+                if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y ||
+                    VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
                 {
-                    var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) - VertexList[VertexList.Count - 1].X * VertexList[0].Y + VertexList[0].X * VertexList[VertexList.Count - 1].Y)
-                      / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
+                    var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) -
+                              VertexList[VertexList.Count - 1].X * VertexList[0].Y +
+                              VertexList[0].X * VertexList[VertexList.Count - 1].Y)
+                            / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
                     xb.Add(x);
                 }
+
                 xb.Sort();
                 for (int i = 0; i < xb.Count; i += 2)
                 {
                     g.DrawLine(DrawPen, new Point(xb[i], Y), new Point(xb[i + 1], Y));
                 }
 
+                pictureBox1.Image = buff;  // после отрисовки нужно возвращать, что нарисовал
             }
         }
 
@@ -188,7 +189,6 @@ namespace GSK2
 
             foreach (Point p in VertexList)
             {
-
                 if (p.Y < yMin)
                 {
                     yMin = p.Y;
@@ -198,9 +198,9 @@ namespace GSK2
                     yMax = p.Y;
                 }
             }
+
             yMin = yMin < 0 ? 0 : yMin;
             yMax = yMax < pictureBox1.Height ? yMax : pictureBox1.Height;
-
         }
 
         private List<List<Point>> figure = new List<List<Point>>();
@@ -212,14 +212,13 @@ namespace GSK2
             {
                 new Point(e.X - 150, e.Y + 100),
                 new Point(e.X - 150, e.Y),
-                new Point(e.X - 50 , e.Y),
-                new Point(e.X, e.Y-100),
-                new Point(e.X+ 50, e.Y),
-                new Point(e.X+150, e.Y),
+                new Point(e.X - 50, e.Y),
+                new Point(e.X, e.Y - 100),
+                new Point(e.X + 50, e.Y),
+                new Point(e.X + 150, e.Y),
                 new Point(e.X + 150, e.Y + 100)
             };
             figure.Add(fg);
-
         }
 
         // Создание фигуры Звезда 
@@ -233,21 +232,19 @@ namespace GSK2
             for (var k = 0; k < 2 * cornersCount + 1; k++)
             {
                 l = k % 2 == 0 ? r : R;
-                star.Add(new Point((int)(e.X + l * Math.Cos(a)), (int)(e.Y + l * Math.Sin(a))));
+                star.Add(new Point((int) (e.X + l * Math.Cos(a)), (int) (e.Y + l * Math.Sin(a))));
                 a += da;
             }
-            figure.Add(star);
 
+            figure.Add(star);
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
         }
 
         //Выбор цвета
@@ -268,7 +265,6 @@ namespace GSK2
                     DrawPen.Color = Color.Blue;
                     break;
             }
-
         }
 
         // Выбор фигур
@@ -303,7 +299,6 @@ namespace GSK2
         // Колличество углов
         private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
         {
-
             cornersCount = comboBox3.SelectedIndex + 5;
         }
 
@@ -333,6 +328,7 @@ namespace GSK2
 
         //ТМО
         int[] setQ = new int[2];
+
         private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
         {
             switch (comboBox4.SelectedIndex)
@@ -345,13 +341,11 @@ namespace GSK2
                     setQ[0] = 3;
                     setQ[1] = 3;
                     break;
-                default:
-                    break;
             }
-
-
         }
+
         public M[] m;
+
         private void Tmo()
         {
             List<int> Xal = new List<int>();
@@ -360,7 +354,7 @@ namespace GSK2
             List<int> Xbr = new List<int>();
             List<int> xrl = new List<int>();
             List<int> xrr = new List<int>();
-            SearchMinAndMax();
+            SearchMinAndMax(); // находишь y только у одной фигуры, а нужно у обеих, из-за этого неправильно рисуется; оставил так, чтобы сам подумал, как исправить
             for (int Y = yMin; Y < yMax; Y++)
             {
                 var oneFigure = CalculationXlAndXr(figure[0], Y);
@@ -369,47 +363,53 @@ namespace GSK2
                 var secondFigure = CalculationXlAndXr(figure[1], Y);
                 Xbl = secondFigure[0];
                 Xbr = secondFigure[1];
-                if (Xal.Count == 0 && Xbl.Count == 0 )
+                if (Xal.Count == 0 && Xbl.Count == 0)
                 {
                     continue;
                 }
+
                 int n = Xal.Count;
                 int nM;
-                 m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
+                m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
                 for (int i = 0; i < n; i++)
                 {
                     m[i] = new M(Xal[i], 2);
                 }
+
                 nM = n;
                 n = Xar.Count;
                 for (int i = 0; i < n; i++)
                 {
                     m[i + nM] = new M(Xar[i], -2);
                 }
+
                 nM = nM + n;
                 n = Xbl.Count;
                 for (int i = 0; i < n; i++)
                 {
                     m[nM + i] = new M(Xbl[i], 1);
                 }
+
                 nM = nM + n;
                 n = Xbr.Count;
                 for (int i = 0; i < n; i++)
                 {
                     m[nM + i] = new M(Xbr[i], -1);
                 }
-                nM = nM + n; 
-               SortArrayM();
-                int k = 1;
-                int m1 = 1;
+
+                nM = nM + n; // лучше: nM += n;
+                SortArrayM();
+                int k = 1; // можно объявить в другом пространстве имен
+                int m1 = 1; // тоже самое
                 int q = 0;
-                Xbr.Clear();
+                xrl.Clear(); // было XBl -- а это другая переменная
                 xrr.Clear();
                 if (m[0].x >= 0 && m[0].dQ < 0)
                 {
                     xrl.Add(0);
                     q = -m[0].dQ;
                 }
+
                 for (int i = 0; i < nM; i++)
                 {
                     int x = m[i].x;
@@ -424,12 +424,15 @@ namespace GSK2
                         xrr.Add(x);
                         m1 += 1;
                     }
+
                     q = Qnew;
                 }
+
                 if (setQ[0] <= q && q <= setQ[1])
                 {
                     xrr.Add(pictureBox1.Height);
                 }
+
                 for (int i = 0; i < xrr.Count; i++)
                 {
                     g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
@@ -486,8 +489,9 @@ namespace GSK2
 
                 if (VertexList[i].Y < Y && VertexList[k].Y >= Y || VertexList[i].Y >= Y && VertexList[k].Y < Y)
                 {
-                    var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y + VertexList[k].X * VertexList[i].Y)
-                      / (VertexList[k].Y - VertexList[i].Y);
+                    var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y +
+                              VertexList[k].X * VertexList[i].Y)
+                            / (VertexList[k].Y - VertexList[i].Y);
 
                     if (VertexList[i].Y < VertexList[k].Y)
                     {
@@ -498,15 +502,15 @@ namespace GSK2
                         xL.Add(x);
                     }
                 }
-
-
             }
 
-            if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y || VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
+            if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y ||
+                VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
             {
-                var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) - VertexList[VertexList.Count - 1].X * VertexList[0].Y + VertexList[0].X * VertexList[VertexList.Count - 1].Y)
-                  / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
-
+                var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) -
+                          VertexList[VertexList.Count - 1].X * VertexList[0].Y +
+                          VertexList[0].X * VertexList[VertexList.Count - 1].Y)
+                        / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
             }
 
             List<List<int>> arr = new List<List<int>>();
@@ -521,17 +525,12 @@ namespace GSK2
         {
             if (figure.Count > 1)
             {
+                g.Clear(Color.White); // когда заново рисуешь, нужно стирать сначала все, а потом уже рисовать
                 Tmo();
-
             }
-            VertexList.Clear();
+
+            // VertexList.Clear(); // закоментил, чтобы можно было посмотреть как работает с другими ТМО
             pictureBox1.Image = buff;
         }
-       
-        
     }
 }
-
-
-
-
