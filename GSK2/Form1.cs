@@ -290,6 +290,7 @@ namespace GSK2
         {
             g.Clear(Color.White);
             VertexList.Clear();
+            pictureBox1.Image = buff;
             figure.Clear();
         }
 
@@ -350,7 +351,7 @@ namespace GSK2
 
 
         }
-
+        public M[] m;
         private void Tmo()
         {
             List<int> Xal = new List<int>();
@@ -374,7 +375,7 @@ namespace GSK2
                 }
                 int n = Xal.Count;
                 int nM;
-                M[] m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
+                 m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
                 for (int i = 0; i < n; i++)
                 {
                     m[i] = new M(Xal[i], 2);
@@ -397,26 +398,13 @@ namespace GSK2
                 {
                     m[nM + i] = new M(Xbr[i], -1);
                 }
-                nM = nM + n;
-
-                //сортировка массива пузырьковым методом
-                for (var i = 0; i < m.Length; i++)
-                {
-                    for (var j = 0; j < m.Length - 1; j++)
-                    {
-                        if (m[j].x > m[j + 1].x)
-                        {
-                            var buff = new M(j + 1, j + 1);
-                            m[j + 1] = m[j];
-                            m[j] = buff;
-                        }
-                    }
-                }
-
-
+                nM = nM + n; 
+               SortArrayM();
                 int k = 1;
                 int m1 = 1;
                 int q = 0;
+                Xbr.Clear();
+                xrr.Clear();
                 if (m[0].x >= 0 && m[0].dQ < 0)
                 {
                     xrl.Add(0);
@@ -445,6 +433,23 @@ namespace GSK2
                 for (int i = 0; i < xrr.Count; i++)
                 {
                     g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
+                }
+            }
+        }
+
+        //сортировка массива пузырьковым методом
+        private void SortArrayM()
+        {
+            for (var i = 0; i < m.Length; i++)
+            {
+                for (var j = 0; j < m.Length - 1; j++)
+                {
+                    if (m[j].x > m[j + 1].x)
+                    {
+                        var buffSort = new M(m[j + 1].x, m[j + 1].dQ);
+                        m[j + 1] = m[j];
+                        m[j] = buffSort;
+                    }
                 }
             }
         }
