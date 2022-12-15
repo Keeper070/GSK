@@ -567,36 +567,40 @@ namespace GSK2
         }
 
         //вращение относительно центра с координатами
-        private void RotationToTheCenter(PointGeoTransform pointGt)
+        private void RotationToTheCenter(PointGeoTransform pointGt, bool start)
         {
-            //массив начала координат
-            float[,] fromCenterOfOrigin = new[,]
-
-        {
-                {1,0,0},
-                {0,1,1},
-                {-pointGt.X,-pointGt.Y,1}
-            };
-            for (int i = 0; i < VertexList.Count; i++)
+            if (start)
             {
-                VertexList[i] = СalculatinTheMatrix(fromCenterOfOrigin, VertexList[i]);
+                //массив начала координат
+                float[,] fromCenterOfOrigin =
 
+                {
+                    {1,0,0},
+                    {0,1,1},
+                    {-pointGt.X,-pointGt.Y,1}
+                };
+                for (int i = 0; i < VertexList.Count; i++)
+                {
+                    VertexList[i] = СalculatinTheMatrix(fromCenterOfOrigin, VertexList[i]);
+
+                }
             }
-
-            //в центр
-            float[,] fromCenter = new[,]
-
-        {
-                {1,0,0},
-                {0,1,0},
-                {pointGt.X,pointGt.Y,1}
-            };
-            for (int i = 0; i < VertexList.Count; i++)
+            else
             {
-                VertexList[i] = СalculatinTheMatrix(fromCenter, VertexList[i]);
+                //в центр
+                float[,] fromCenter =
 
+                {
+                    {1,0,0},
+                    {0,1,0},
+                    {pointGt.X,pointGt.Y,1}
+                };
+                for (int i = 0; i < VertexList.Count; i++)
+                {
+                    VertexList[i] = СalculatinTheMatrix(fromCenter, VertexList[i]);
+
+                }
             }
-
 
         }
 
