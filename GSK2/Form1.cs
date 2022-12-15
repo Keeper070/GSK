@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -549,19 +550,53 @@ namespace GSK2
         // геометрические преобразования
         private void GeometricTransformations(object sender, MouseEventArgs e)
         {
-            
+
             float[,] matrixR30 = new[,]
             {
                 { (float) Math.Cos(30),     (float) Math.Sin(30),   0},
                 { (float)(-Math.Sin(30)),  (float)Math.Cos(30),   0},
                 { 0, 1, 2}
             };
-
-            for(int i = 0; i < VertexList.Count; i++)
+            // изменяем координату вершины фигуры
+            for (int i = 0; i < VertexList.Count; i++)
             {
-                СalculatinTheMatrix(matrixR30, VertexList[i]);
+                VertexList[i] = СalculatinTheMatrix(matrixR30, VertexList[i]);
+
             }
-            
+
+        }
+
+        //вращение относительно центра с координатами
+        private void RotationToTheCenter(PointGeoTransform pointGt)
+        {
+            //массив начала координат
+            float[,] fromCenterOfOrigin = new[,]
+
+        {
+                {1,0,0},
+                {0,1,1},
+                {-pointGt.X,-pointGt.Y,1}
+            };
+            for (int i = 0; i < VertexList.Count; i++)
+            {
+                VertexList[i] = СalculatinTheMatrix(fromCenterOfOrigin, VertexList[i]);
+
+            }
+
+            //в центр
+            float[,] fromCenter = new[,]
+
+        {
+                {1,0,0},
+                {0,1,0},
+                {pointGt.X,pointGt.Y,1}
+            };
+            for (int i = 0; i < VertexList.Count; i++)
+            {
+                VertexList[i] = СalculatinTheMatrix(fromCenter, VertexList[i]);
+
+            }
+
 
         }
 
@@ -569,8 +604,7 @@ namespace GSK2
         {
             if (comboBox6.SelectedIndex == 0)
             {
-                
-               
+
             }
         }
 
@@ -584,9 +618,9 @@ namespace GSK2
                 Y = pointGt.X * matrixR30[0, 1] + pointGt.Y * matrixR30[1, 1] + pointGt.Z * matrixR30[2, 1],
                 Z = pointGt.X * matrixR30[0, 2] + pointGt.Y * matrixR30[1, 2] + pointGt.Z * matrixR30[2, 2]
             };
-            
+
         }
-        }
+    }
 
     // структура описывающая точку в трехмерном пространстве
     public struct PointGeoTransform
