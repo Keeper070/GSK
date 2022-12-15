@@ -4,9 +4,12 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace GSK2
 {
@@ -17,7 +20,8 @@ namespace GSK2
         List<Point> VertexList = new List<Point>();
         bool SplineType = false;
         bool FlagFigure = false;
-
+        int cornersCount;
+        Bitmap buff;
 
         int yMin;
         int yMax;
@@ -25,8 +29,11 @@ namespace GSK2
         public Form1()
         {
             InitializeComponent();
+            buff = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            g = Graphics.FromImage(buff);
             g = pictureBox1.CreateGraphics();
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            
         }
 
         static double Factorial(int n)
@@ -76,11 +83,19 @@ namespace GSK2
 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (FlagFigure)
+            if (FlagFigure && SplineType == false)
             {
                 CreateFg1(e);
                 VertexList = figure.Last();
                 FirstAlgoritm(e);
+
+            }
+            else if (!FlagFigure && SplineType == false)
+            {
+                CreateZv(e);
+                VertexList = figure.Last();
+                FirstAlgoritm(e);
+
             }
             else if (MouseButtons == MouseButtons.Left)
             {
@@ -101,9 +116,10 @@ namespace GSK2
                 FirstAlgoritm(e);
             }
 
+
         }
 
-        //алгоритм закрашивание фигуры
+        //алгоритм закрашивание фигуры (внутри)
         private void FirstAlgoritm(MouseEventArgs e)
         {
             int k;
@@ -143,6 +159,27 @@ namespace GSK2
             }
         }
 
+        /*//Второй алгоритм закрашивание (вне фигуры)
+        private void SecondAlgoritm(MouseEventArgs e)
+        {
+            bool CW = false;
+            SearchMinAndMax();
+            for (int i = 0; i < VertexList.Count; i++)
+            {
+                 
+            }
+        }
+
+        private void Matrix(int previous, int current, int next)
+        {
+           var s= 0.5 * ((VertexList[previous].X * VertexList[current].Y)
+            + (VertexList[previous].Y * VertexList[next].X)
+            + (VertexList[current].X * VertexList[next].Y)
+                   - (VertexList[current].Y * VertexList[next].X)
+                   - (VertexList[previous].Y * VertexList[current].X)
+                   - (VertexList[previous].X * VertexList[next].Y)) < 0;
+        }*/
+
         // Поиск Ymin и Ymax
         private void SearchMinAndMax()
         {
@@ -161,17 +198,20 @@ namespace GSK2
                     yMax = p.Y;
                 }
             }
+            yMin = yMin < 0 ? 0 : yMin;
+            yMax = yMax < pictureBox1.Height ? yMax : pictureBox1.Height;
+
         }
 
         private List<List<Point>> figure = new List<List<Point>>();
 
-        //создание Фигуры 1
+        //Создание Фигуры 1
         private void CreateFg1(MouseEventArgs e)
         {
             var fg = new List<Point>()
             {
                 new Point(e.X - 150, e.Y + 100),
-                new Point(e.X - 150, e.Y), 
+                new Point(e.X - 150, e.Y),
                 new Point(e.X - 50 , e.Y),
                 new Point(e.X, e.Y-100),
                 new Point(e.X+ 50, e.Y),
@@ -179,6 +219,24 @@ namespace GSK2
                 new Point(e.X + 150, e.Y + 100)
             };
             figure.Add(fg);
+
+        }
+
+        // Создание фигуры Звезда 
+        private void CreateZv(MouseEventArgs e)
+        {
+            const double R = 25;
+            const double r = 50;
+            const double d = 0;
+            double a = d, da = Math.PI / cornersCount, l;
+            var star = new List<Point>();
+            for (var k = 0; k < 2 * cornersCount + 1; k++)
+            {
+                l = k % 2 == 0 ? r : R;
+                star.Add(new Point((int)(e.X + l * Math.Cos(a)), (int)(e.Y + l * Math.Sin(a))));
+                a += da;
+            }
+            figure.Add(star);
 
         }
 
@@ -192,6 +250,7 @@ namespace GSK2
 
         }
 
+        //Выбор цвета
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
             switch (comboBox2.SelectedIndex)
@@ -212,29 +271,262 @@ namespace GSK2
 
         }
 
+        // Выбор фигур
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            switch (comboBox1.SelectedIndex)
+            var index = comboBox1.SelectedIndex;
+            if (index == 0)
             {
-                case 0:
-
-                    break;
-
-
+                FlagFigure = true;
             }
-            FlagFigure = true;
+            else if (index == 1)
+            {
+                FlagFigure = false;
+            }
         }
 
+        // Кнопка очистки
         private void button1_Click(object sender, EventArgs e)
         {
             g.Clear(Color.White);
             VertexList.Clear();
+            figure.Clear();
         }
 
+        // Выбор сплайна
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             SplineType = checkBox1.Checked;
         }
+
+        // Колличество углов
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+            cornersCount = comboBox3.SelectedIndex + 5;
+        }
+
+        // Фигуры
+        public enum Figures
+        {
+            Fg1,
+            Zv
+        }
+
+        // Метод создания фигуры 
+        /* public void FigureAdd(MouseEventArgs e)
+         {
+             switch ()
+             {
+                 case 0:
+                     CreateFg1(e);
+                     FirstAlgoritm(e);
+                     break;
+                 case 1:
+                     CreateZv(e);
+                     FirstAlgoritm(e);
+                     break;
+             }
+         }*/
+
+
+        //ТМО
+        int[] setQ = new int[2];
+        private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            switch (comboBox4.SelectedIndex)
+            {
+                case 0:
+                    setQ[0] = 1;
+                    setQ[1] = 2;
+                    break;
+                case 1:
+                    setQ[0] = 3;
+                    setQ[1] = 3;
+                    break;
+                default:
+                    break;
+            }
+
+
+        }
+
+        private void Tmo()
+        {
+            List<int> Xal = new List<int>();
+            List<int> Xar = new List<int>();
+            List<int> Xbl = new List<int>();
+            List<int> Xbr = new List<int>();
+            List<int> xrl = new List<int>();
+            List<int> xrr = new List<int>();
+            SearchMinAndMax();
+            for (int Y = yMin; Y < yMax; Y++)
+            {
+                var oneFigure = CalculationXlAndXr(figure[0], Y);
+                Xal = oneFigure[0];
+                Xar = oneFigure[1];
+                var secondFigure = CalculationXlAndXr(figure[1], Y);
+                Xbl = secondFigure[0];
+                Xbr = secondFigure[1];
+                if (Xal.Count == 0 && Xbl.Count == 0 )
+                {
+                    continue;
+                }
+                int n = Xal.Count;
+                int nM;
+                M[] m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
+                for (int i = 0; i < n; i++)
+                {
+                    m[i] = new M(Xal[i], 2);
+                }
+                nM = n;
+                n = Xar.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    m[i + nM] = new M(Xar[i], -2);
+                }
+                nM = nM + n;
+                n = Xbl.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    m[nM + i] = new M(Xbl[i], 1);
+                }
+                nM = nM + n;
+                n = Xbr.Count;
+                for (int i = 0; i < n; i++)
+                {
+                    m[nM + i] = new M(Xbr[i], -1);
+                }
+                nM = nM + n;
+
+                //сортировка массива пузырьковым методом
+                for (var i = 0; i < m.Length; i++)
+                {
+                    for (var j = 0; j < m.Length - 1; j++)
+                    {
+                        if (m[j].x > m[j + 1].x)
+                        {
+                            var buff = new M(j + 1, j + 1);
+                            m[j + 1] = m[j];
+                            m[j] = buff;
+                        }
+                    }
+                }
+
+
+                int k = 1;
+                int m1 = 1;
+                int q = 0;
+                if (m[0].x >= 0 && m[0].dQ < 0)
+                {
+                    xrl.Add(0);
+                    q = -m[0].dQ;
+                }
+                for (int i = 0; i < nM; i++)
+                {
+                    int x = m[i].x;
+                    int Qnew = q + m[i].dQ;
+                    if (!(setQ[0] <= q && q <= setQ[1]) && setQ[0] <= Qnew && Qnew <= setQ[1])
+                    {
+                        xrl.Add(x);
+                        k += 1;
+                    }
+                    else if (setQ[0] <= q && q <= setQ[1] && !(setQ[0] <= Qnew && Qnew <= setQ[1]))
+                    {
+                        xrr.Add(x);
+                        m1 += 1;
+                    }
+                    q = Qnew;
+                }
+                if (setQ[0] <= q && q <= setQ[1])
+                {
+                    xrr.Add(pictureBox1.Height);
+                }
+                for (int i = 0; i < xrr.Count; i++)
+                {
+                    g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
+                }
+            }
+        }
+
+        // Для обработки исходных границ сегментов
+        public class M
+        {
+            public int x { get; }
+            public int dQ { get; }
+
+            public M(int x, int dQ)
+            {
+                this.x = x;
+                this.dQ = dQ;
+            }
+        }
+
+
+        // Нахождение X левой и правой границы
+        private List<List<int>> CalculationXlAndXr(List<Point> VertexList, int Y)
+        {
+            var k = 0;
+            List<int> xR = new List<int>();
+            List<int> xL = new List<int>();
+
+
+            for (int i = 0; i < VertexList.Count - 1; i++)
+            {
+                if (i < VertexList.Count)
+                {
+                    k = i + 1;
+                }
+                else k = 1;
+
+                if (VertexList[i].Y < Y && VertexList[k].Y >= Y || VertexList[i].Y >= Y && VertexList[k].Y < Y)
+                {
+                    var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y + VertexList[k].X * VertexList[i].Y)
+                      / (VertexList[k].Y - VertexList[i].Y);
+
+                    if (VertexList[i].Y < VertexList[k].Y)
+                    {
+                        xR.Add(x);
+                    }
+                    else if (VertexList[i].Y > VertexList[k].Y)
+                    {
+                        xL.Add(x);
+                    }
+                }
+
+
+            }
+
+            if (VertexList[VertexList.Count - 1].Y < Y && VertexList[0].Y >= Y || VertexList[VertexList.Count - 1].Y >= Y && VertexList[0].Y < Y)
+            {
+                var x = -((Y * (VertexList[VertexList.Count - 1].X - VertexList[0].X)) - VertexList[VertexList.Count - 1].X * VertexList[0].Y + VertexList[0].X * VertexList[VertexList.Count - 1].Y)
+                  / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
+
+            }
+
+            List<List<int>> arr = new List<List<int>>();
+            arr.Add(xL);
+            arr.Add(xR);
+
+            return arr;
+        }
+
+        //кнопка для применения тмо
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (figure.Count > 1)
+            {
+                Tmo();
+
+            }
+            VertexList.Clear();
+            pictureBox1.Image = buff;
+        }
+       
+        
     }
 }
+
+
+
 
