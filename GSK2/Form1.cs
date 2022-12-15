@@ -21,7 +21,8 @@ namespace GSK2
         bool SplineType = false;
         bool FlagFigure = false;
         int cornersCount;
-        Bitmap buff;
+        Bitmap bitmap;
+        public M[] m;
 
         int yMin;
         int yMax;
@@ -29,10 +30,9 @@ namespace GSK2
         public Form1()
         {
             InitializeComponent();
-            buff = new Bitmap(pictureBox1.Width, pictureBox1.Height); // для понимания кода название перменной bitmap считаю лучше, buff часто где используешь и можешь запутаться
-            g = Graphics.FromImage(buff);
-            // g = pictureBox1.CreateGraphics(); -- не нужно создавать, ты уже bitmap туда закинул
-            // g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; -- зачем?
+            bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height); 
+            g = Graphics.FromImage(bitmap);
+           
         }
 
         static double Factorial(int n)
@@ -119,7 +119,7 @@ namespace GSK2
         {
             int k;
             List<int> xb = new List<int>();
-            SearchMinAndMax();
+            SearchMinAndMax(VertexList);
             for (int Y = yMin; Y <= yMax; Y++)
             {
                 xb.Clear();
@@ -156,7 +156,7 @@ namespace GSK2
                     g.DrawLine(DrawPen, new Point(xb[i], Y), new Point(xb[i + 1], Y));
                 }
 
-                pictureBox1.Image = buff;  // после отрисовки нужно возвращать, что нарисовал
+                pictureBox1.Image = bitmap;  
             }
         }
 
@@ -182,7 +182,7 @@ namespace GSK2
         }*/
 
         // Поиск Ymin и Ymax
-        private void SearchMinAndMax()
+        private List<int> SearchMinAndMax(List<Point>VertexList)
         {
             yMin = VertexList[0].Y;
             yMax = VertexList[0].Y;
@@ -197,10 +197,12 @@ namespace GSK2
                 {
                     yMax = p.Y;
                 }
+                
             }
 
             yMin = yMin < 0 ? 0 : yMin;
             yMax = yMax < pictureBox1.Height ? yMax : pictureBox1.Height;
+            return new List<int> { yMin, yMax };
         }
 
         private List<List<Point>> figure = new List<List<Point>>();
@@ -286,7 +288,7 @@ namespace GSK2
         {
             g.Clear(Color.White);
             VertexList.Clear();
-            pictureBox1.Image = buff;
+            pictureBox1.Image = bitmap;
             figure.Clear();
         }
 
@@ -344,8 +346,6 @@ namespace GSK2
             }
         }
 
-        public M[] m;
-
         private void Tmo()
         {
             List<int> Xal = new List<int>();
@@ -354,7 +354,10 @@ namespace GSK2
             List<int> Xbr = new List<int>();
             List<int> xrl = new List<int>();
             List<int> xrr = new List<int>();
-            SearchMinAndMax(); // находишь y только у одной фигуры, а нужно у обеих, из-за этого неправильно рисуется; оставил так, чтобы сам подумал, как исправить
+            var s1Figure = SearchMinAndMax(figure[0]);
+            var s2Figure = SearchMinAndMax(figure[1]);
+            var yMin = s1Figure[0] < s2Figure[0] ? s1Figure[0] : s2Figure[0];
+            var yMax = s1Figure[1] < s2Figure[1] ? s2Figure[1] : s1Figure[1];
             for (int Y = yMin; Y < yMax; Y++)
             {
                 var oneFigure = CalculationXlAndXr(figure[0], Y);
@@ -397,13 +400,17 @@ namespace GSK2
                     m[nM + i] = new M(Xbr[i], -1);
                 }
 
-                nM = nM + n; // лучше: nM += n;
+                nM += n; 
+
                 SortArrayM();
-                int k = 1; // можно объявить в другом пространстве имен
-                int m1 = 1; // тоже самое
+
+                int k = 1; 
+                int m1 = 1; 
                 int q = 0;
-                xrl.Clear(); // было XBl -- а это другая переменная
+
+                xrl.Clear(); 
                 xrr.Clear();
+
                 if (m[0].x >= 0 && m[0].dQ < 0)
                 {
                     xrl.Add(0);
@@ -525,12 +532,12 @@ namespace GSK2
         {
             if (figure.Count > 1)
             {
-                g.Clear(Color.White); // когда заново рисуешь, нужно стирать сначала все, а потом уже рисовать
+                g.Clear(Color.White); 
                 Tmo();
             }
 
-            // VertexList.Clear(); // закоментил, чтобы можно было посмотреть как работает с другими ТМО
-            pictureBox1.Image = buff;
+            VertexList.Clear(); 
+            pictureBox1.Image = bitmap;
         }
     }
 }
