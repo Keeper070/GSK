@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,7 +18,7 @@ namespace GSK2
     {
         Graphics g;
         Pen DrawPen = new Pen(Color.Black, 1);
-        List<Point> VertexList = new List<Point>();
+        List<PointGeoTransform> VertexList = new List<PointGeoTransform>();
         bool SplineType = false;
         bool FlagFigure = false;
         int cornersCount;
@@ -30,9 +31,8 @@ namespace GSK2
         public Form1()
         {
             InitializeComponent();
-            bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height); 
+            bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g = Graphics.FromImage(bitmap);
-           
         }
 
         static double Factorial(int n)
@@ -44,15 +44,15 @@ namespace GSK2
         }
 
         //Кубический сплайн
-        public void DrawCubeSpline(Pen DrPen, List<Point> P)
+        public void DrawCubeSpline(Pen DrPen, List<PointGeoTransform> P)
         {
             PointF[] L = new PointF[4]; // Матрица вещественных коэффициентов
-            Point Pv1 = P[0];
-            Point Pv2 = P[0];
+            PointGeoTransform Pv1 = P[0];
+            PointGeoTransform Pv2 = P[0];
             const double dt = 0.04;
             double t = 0;
             double xt, yt;
-            Point Ppred = P[0], Pt = P[0];
+            PointGeoTransform Ppred = P[0], Pt = P[0];
             // Касательные векторы
             Pv1.X = 4 * (P[1].X - P[0].X);
             Pv1.Y = 4 * (P[1].Y - P[0].Y);
@@ -71,15 +71,17 @@ namespace GSK2
             {
                 xt = ((L[0].X * t + L[1].X) * t + L[2].X) * t + L[3].X;
                 yt = ((L[0].Y * t + L[1].Y) * t + L[2].Y) * t + L[3].Y;
-                Pt.X = (int) Math.Round(xt);
-                Pt.Y = (int) Math.Round(yt);
-                g.DrawLine(DrPen, Ppred, Pt);
+                Pt.X = (int)Math.Round(xt);
+                Pt.Y = (int)Math.Round(yt);
+                g.DrawLine(DrPen, Ppred.ToPoint(), Pt.ToPoint());
+                pictureBox1.Image = bitmap;
                 Ppred = Pt;
                 t += dt;
+
             }
         }
 
-
+        //обработчик события 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
             if (FlagFigure && SplineType == false)
@@ -96,11 +98,12 @@ namespace GSK2
             }
             else if (MouseButtons == MouseButtons.Left)
             {
-                VertexList.Add(new Point(e.X, e.Y));
+                VertexList.Add(new PointGeoTransform() { X = e.X, Y = e.Y });
                 g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
                 if (VertexList.Count > 1)
                 {
-                    g.DrawLine(DrawPen, VertexList[VertexList.Count - 2], VertexList[VertexList.Count - 1]);
+                    g.DrawLine(DrawPen, VertexList[VertexList.Count - 2].ToPoint(), VertexList[VertexList.Count - 1].ToPoint());
+                    pictureBox1.Image = bitmap;
                 }
             }
 
@@ -136,7 +139,7 @@ namespace GSK2
                         var x = -((Y * (VertexList[i].X - VertexList[k].X)) - VertexList[i].X * VertexList[k].Y +
                                   VertexList[k].X * VertexList[i].Y)
                                 / (VertexList[k].Y - VertexList[i].Y);
-                        xb.Add(x);
+                        xb.Add((int)x);
                     }
                 }
 
@@ -147,7 +150,7 @@ namespace GSK2
                               VertexList[VertexList.Count - 1].X * VertexList[0].Y +
                               VertexList[0].X * VertexList[VertexList.Count - 1].Y)
                             / (VertexList[0].Y - VertexList[VertexList.Count - 1].Y);
-                    xb.Add(x);
+                    xb.Add((int)x);
                 }
 
                 xb.Sort();
@@ -156,7 +159,7 @@ namespace GSK2
                     g.DrawLine(DrawPen, new Point(xb[i], Y), new Point(xb[i + 1], Y));
                 }
 
-                pictureBox1.Image = bitmap;  
+                pictureBox1.Image = bitmap;
             }
         }
 
@@ -182,22 +185,22 @@ namespace GSK2
         }*/
 
         // Поиск Ymin и Ymax
-        private List<int> SearchMinAndMax(List<Point>VertexList)
+        private List<int> SearchMinAndMax(List<PointGeoTransform> VertexList)
         {
-            yMin = VertexList[0].Y;
-            yMax = VertexList[0].Y;
+            yMin = (int)VertexList[0].Y;
+            yMax = (int)VertexList[0].Y;
 
-            foreach (Point p in VertexList)
+            foreach (PointGeoTransform p in VertexList)
             {
                 if (p.Y < yMin)
                 {
-                    yMin = p.Y;
+                    yMin = (int)p.Y;
                 }
                 else if (yMax < p.Y)
                 {
-                    yMax = p.Y;
+                    yMax = (int)p.Y;
                 }
-                
+
             }
 
             yMin = yMin < 0 ? 0 : yMin;
@@ -205,20 +208,20 @@ namespace GSK2
             return new List<int> { yMin, yMax };
         }
 
-        private List<List<Point>> figure = new List<List<Point>>();
+        private List<List<PointGeoTransform>> figure = new List<List<PointGeoTransform>>();
 
         //Создание Фигуры 1
         private void CreateFg1(MouseEventArgs e)
         {
-            var fg = new List<Point>()
+            var fg = new List<PointGeoTransform>()
             {
-                new Point(e.X - 150, e.Y + 100),
-                new Point(e.X - 150, e.Y),
-                new Point(e.X - 50, e.Y),
-                new Point(e.X, e.Y - 100),
-                new Point(e.X + 50, e.Y),
-                new Point(e.X + 150, e.Y),
-                new Point(e.X + 150, e.Y + 100)
+                new PointGeoTransform(){X=e.X - 150, Y=e.Y + 100},
+                new PointGeoTransform(){X=e.X - 150,Y= e.Y},
+                new PointGeoTransform(){X=e.X - 50, Y= e.Y},
+                new PointGeoTransform(){X=e.X, Y=e.Y - 100},
+                new PointGeoTransform(){X=e.X + 50,Y= e.Y},
+                new PointGeoTransform(){X=e.X + 150,Y= e.Y},
+                new PointGeoTransform(){X= e.X + 150,Y= e.Y + 100 }
             };
             figure.Add(fg);
         }
@@ -230,11 +233,11 @@ namespace GSK2
             const double r = 50;
             const double d = 0;
             double a = d, da = Math.PI / cornersCount, l;
-            var star = new List<Point>();
+            var star = new List<PointGeoTransform>();
             for (var k = 0; k < 2 * cornersCount + 1; k++)
             {
                 l = k % 2 == 0 ? r : R;
-                star.Add(new Point((int) (e.X + l * Math.Cos(a)), (int) (e.Y + l * Math.Sin(a))));
+                star.Add(new PointGeoTransform() { X = ((float)(e.X + l * Math.Cos(a))), Y = ((float)(e.Y + l * Math.Sin(a))) });
                 a += da;
             }
 
@@ -296,6 +299,7 @@ namespace GSK2
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
             SplineType = checkBox1.Checked;
+
         }
 
         // Колличество углов
@@ -314,18 +318,20 @@ namespace GSK2
         // Метод создания фигуры 
         /* public void FigureAdd(MouseEventArgs e)
          {
-             switch ()
-             {
-                 case 0:
-                     CreateFg1(e);
-                     FirstAlgoritm(e);
-                     break;
-                 case 1:
-                     CreateZv(e);
-                     FirstAlgoritm(e);
-                     break;
-             }
-         }*/
+            switch ()
+            {
+                case 0:
+                    CreateFg1(e);
+                    FirstAlgoritm(e);
+                    break;
+                case 1:
+                    CreateZv(e);
+                    FirstAlgoritm(e);
+                    break;
+                default:
+                    break;
+            }
+        }*/
 
 
         //ТМО
@@ -400,15 +406,15 @@ namespace GSK2
                     m[nM + i] = new M(Xbr[i], -1);
                 }
 
-                nM += n; 
+                nM += n;
 
                 SortArrayM();
 
-                int k = 1; 
-                int m1 = 1; 
+                int k = 1;
+                int m1 = 1;
                 int q = 0;
 
-                xrl.Clear(); 
+                xrl.Clear();
                 xrr.Clear();
 
                 if (m[0].x >= 0 && m[0].dQ < 0)
@@ -479,7 +485,7 @@ namespace GSK2
 
 
         // Нахождение X левой и правой границы
-        private List<List<int>> CalculationXlAndXr(List<Point> VertexList, int Y)
+        private List<List<int>> CalculationXlAndXr(List<PointGeoTransform> VertexList, int Y)
         {
             var k = 0;
             List<int> xR = new List<int>();
@@ -502,11 +508,11 @@ namespace GSK2
 
                     if (VertexList[i].Y < VertexList[k].Y)
                     {
-                        xR.Add(x);
+                        xR.Add((int)x);
                     }
                     else if (VertexList[i].Y > VertexList[k].Y)
                     {
-                        xL.Add(x);
+                        xL.Add((int)x);
                     }
                 }
             }
@@ -532,12 +538,68 @@ namespace GSK2
         {
             if (figure.Count > 1)
             {
-                g.Clear(Color.White); 
+                g.Clear(Color.White);
                 Tmo();
             }
 
-            VertexList.Clear(); 
+            VertexList.Clear();
             pictureBox1.Image = bitmap;
         }
+
+        // геометрические преобразования
+        private void GeometricTransformations(object sender, MouseEventArgs e)
+        {
+            
+            float[,] matrixR30 = new[,]
+            {
+                { (float) Math.Cos(30),     (float) Math.Sin(30),   0},
+                { (float)(-Math.Sin(30)),  (float)Math.Cos(30),   0},
+                { 0, 1, 2}
+            };
+
+            for(int i = 0; i < VertexList.Count; i++)
+            {
+                СalculatinTheMatrix(matrixR30, VertexList[i]);
+            }
+            
+
+        }
+
+        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox6.SelectedIndex == 0)
+            {
+                
+               
+            }
+        }
+
+        //Метод вычисления матрицы
+        public static PointGeoTransform СalculatinTheMatrix(float[,] matrixR30, PointGeoTransform pointGt)
+        {
+
+            return new PointGeoTransform
+            {
+                X = pointGt.X * matrixR30[0, 0] + pointGt.Y * matrixR30[1, 0] + pointGt.Z * matrixR30[2, 0],
+                Y = pointGt.X * matrixR30[0, 1] + pointGt.Y * matrixR30[1, 1] + pointGt.Z * matrixR30[2, 1],
+                Z = pointGt.X * matrixR30[0, 2] + pointGt.Y * matrixR30[1, 2] + pointGt.Z * matrixR30[2, 2]
+            };
+            
+        }
+        }
+
+    // структура описывающая точку в трехмерном пространстве
+    public struct PointGeoTransform
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+
+        public Point ToPoint()
+        {
+
+            return new Point((int)X, (int)Y);
+        }
     }
+
 }
