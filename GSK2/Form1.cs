@@ -37,7 +37,7 @@ namespace GSK2
             InitializeComponent();
             bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g = Graphics.FromImage(bitmap);
-            MouseWheel += GeometricTransformations;
+            MouseWheel += TR;
         }
 
         static double Factorial(int n)
@@ -578,10 +578,35 @@ namespace GSK2
         }
         #endregion
 
+        int operation;
         #region Геометрические преобразования
 
+        public void TR(object sender, MouseEventArgs e)
+        {
+            switch (/*Выбор преобразования*/operation)
+            {
+                case 0:
+                    // Вращение
+                    GeometricTransformations(e);
+                    break;
+                case 1:
+                    // Масштабирование OX
+                    Zoom(e.Delta, e);
+                    break;
+                case 2:
+                    // Масштабирование OY
+                    ZoomY(e.Delta, e);
+                    break;
+                default:
+                    break;
+            }
+            g.Clear(Color.White);
+            FirstAlgoritm(e);
+        }
+
+
         // Вращение
-        private void GeometricTransformations(object sender, MouseEventArgs e)
+        private void GeometricTransformations(MouseEventArgs e)
         {
             var buffer = figures[figures.Count - 1];
             var center = new MyPoint() { X = e.X, Y = e.Y };
@@ -601,22 +626,83 @@ namespace GSK2
                 VertexList[i] = СalculatinTheMatrix(matrixR30, VertexList[i]);
             }
             RotationCenter(center, false, buffer);
-            g.Clear(Color.White);
-            FirstAlgoritm(e);
         }
 
-        private void Reflaction()
+        /*Отражение (При отрицательных значениях масштабных коэффициентов происходиn не только изменение размеров, но и зеркальное отражение
+            преобразуемой фигуры*/
+        private void Reflection(char ch)
         {
-            var matrix = new float[3, 3];
-            var e1 = CenterFigure();
-
-
+            switch (ch)
+            {
+                case 'X':
+                    float[,] matrixOX =
+                    {
+                        {1, 0,  0 },
+                        {0,-1,  0 },
+                        {0, 0,  1 },
+                    };
+                    break;
+                case 'Y':
+                    float[,] matrixOY =
+                    {
+                        {-1, 0, 0},
+                        { 0, 1, 0},
+                        { 0, 0, 1},
+                    };
+                    break;
+                default:
+                    break;
+            }
         }
 
         //Масштабирование
-        private void Zoom(float[,] zoom)
+        private void Zoom(float zoom, MouseEventArgs eMouse)
         {
-           if()
+            if (zoom <= 0) zoom = -0.1f;
+            else zoom = 0.1f;
+
+            var sxt = operation == 1 ? 1 + zoom : 1;
+            var syt = 1;
+            float[,] z =
+            {
+                {sxt,  0 ,    0},
+                {0,    syt, 0},
+                {0,    0,   1}
+            };
+            var e = CenterFigure();
+            var figure = figures[figures.Count - 1];
+            RotationCenter(e, true, figure);
+
+            for (int i = 0; i < VertexList.Count; i++)
+            {
+                VertexList[i] = СalculatinTheMatrix(z, VertexList[i]);
+            }
+
+            RotationCenter(e, false, figure);
+        }
+
+         private void ZoomY(float zoomY,MouseEventArgs eMouseY)
+        {
+            if (zoomY <= 0) zoomY = -0.1f;
+            else zoomY = 0.1f;
+            var sxt= operation == 2 ? 1 : zoomY + 1;
+            var syt = 1+zoomY;
+            float[,] z =
+            {
+                {sxt,  0 ,    0},
+                {0,    syt, 0},
+                {0,    0,   1}
+            };
+            var e = CenterFigure();
+            var figure = figures[figures.Count - 1];
+            RotationCenter(e, true, figure);
+
+            for (int i = 0; i < VertexList.Count; i++)
+            {
+                VertexList[i] = СalculatinTheMatrix(z, VertexList[i]);
+            }
+
+            RotationCenter(e, false, figure);
 
         }
 
@@ -626,7 +712,6 @@ namespace GSK2
             SearchMinAndMax(figures[figures.Count - 1]);
             var xCenter = xMax - xMin / 2 + xMin;
             var yCenter = yMax - yMin / 2 + yMin;
-
 
             return new MyPoint() { X = xCenter, Y = yCenter };
         }
@@ -668,13 +753,7 @@ namespace GSK2
 
         }
 
-        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (comboBox6.SelectedIndex == 0)
-            {
-
-            }
-        }
+        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e) => operation = comboBox6.SelectedIndex;
 
         //Метод вычисления матрицы
         public MyPoint СalculatinTheMatrix(float[,] matrixR30, MyPoint pointGt) => new MyPoint()
@@ -690,9 +769,8 @@ namespace GSK2
             public float X { get; set; }
             public float Y { get; set; }
             public float Z { get; set; }
-            public MyPoint()
+            public MyPoint(float X = 0, float Y = 0, float Z = 1)
             {
-                Z = 1.0f;
             }
 
             public Point ToPoint()
