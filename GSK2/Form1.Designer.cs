@@ -44,9 +44,9 @@
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.Window;
             this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.pictureBox1.Location = new System.Drawing.Point(85, 12);
+            this.pictureBox1.Location = new System.Drawing.Point(367, 12);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(860, 451);
+            this.pictureBox1.Size = new System.Drawing.Size(648, 575);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
@@ -58,7 +58,7 @@
             this.comboBox1.Items.AddRange(new object[] {
             "Fg1",
             "Zv"});
-            this.comboBox1.Location = new System.Drawing.Point(131, 497);
+            this.comboBox1.Location = new System.Drawing.Point(119, 34);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(121, 21);
             this.comboBox1.TabIndex = 1;
@@ -73,7 +73,7 @@
             "Красный",
             "Зеленый",
             "Синий"});
-            this.comboBox2.Location = new System.Drawing.Point(131, 539);
+            this.comboBox2.Location = new System.Drawing.Point(12, 83);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(121, 21);
             this.comboBox2.TabIndex = 2;
@@ -82,7 +82,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(920, 575);
+            this.button1.Location = new System.Drawing.Point(940, 562);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 23);
             this.button1.TabIndex = 3;
@@ -93,7 +93,7 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(847, 581);
+            this.checkBox1.Location = new System.Drawing.Point(309, 568);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(41, 17);
             this.checkBox1.TabIndex = 4;
@@ -121,7 +121,7 @@
             "18",
             "19",
             "20"});
-            this.comboBox3.Location = new System.Drawing.Point(312, 497);
+            this.comboBox3.Location = new System.Drawing.Point(208, 83);
             this.comboBox3.Name = "comboBox3";
             this.comboBox3.Size = new System.Drawing.Size(121, 21);
             this.comboBox3.TabIndex = 5;
@@ -134,7 +134,7 @@
             this.comboBox4.Items.AddRange(new object[] {
             "Симметрическая разность",
             "Пересечение"});
-            this.comboBox4.Location = new System.Drawing.Point(484, 497);
+            this.comboBox4.Location = new System.Drawing.Point(10, 170);
             this.comboBox4.Name = "comboBox4";
             this.comboBox4.Size = new System.Drawing.Size(192, 21);
             this.comboBox4.TabIndex = 6;
@@ -143,7 +143,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(506, 539);
+            this.button2.Location = new System.Drawing.Point(367, 562);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(153, 23);
             this.button2.TabIndex = 7;
@@ -158,7 +158,7 @@
             "Поворот вокруг заданного центра на угол 30 градусов",
             "Масштабирование по оси X относительно центра фигуры",
             "Масштабирование по оси Y относительно центра фигуры"});
-            this.comboBox6.Location = new System.Drawing.Point(691, 497);
+            this.comboBox6.Location = new System.Drawing.Point(10, 224);
             this.comboBox6.Name = "comboBox6";
             this.comboBox6.Size = new System.Drawing.Size(254, 21);
             this.comboBox6.TabIndex = 9;

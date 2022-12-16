@@ -89,36 +89,43 @@ namespace GSK2
         //обработчик события 
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
-            if (FlagFigure && SplineType == false)
+            try
             {
-                CreateFg1(e);
-                VertexList = figures.Last();
-                FirstAlgoritm(e);
-            }
-            else if (!FlagFigure && SplineType == false)
-            {
-                CreateZv(e);
-                VertexList = figures.Last();
-                FirstAlgoritm(e);
-            }
-            else if (MouseButtons == MouseButtons.Left)
-            {
-                VertexList.Add(new MyPoint() { X = e.X, Y = e.Y });
-                g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
-                if (VertexList.Count > 1)
+                if (FlagFigure && SplineType == false)
                 {
-                    g.DrawLine(DrawPen, VertexList[VertexList.Count - 2].ToPoint(), VertexList[VertexList.Count - 1].ToPoint());
-                    pictureBox1.Image = bitmap;
+                    CreateFg1(e);
+                    VertexList = figures.Last();
+                    FirstAlgoritm(e);
+                }
+                else if (!FlagFigure && SplineType == false)
+                {
+                    CreateZv(e);
+                    VertexList = figures.Last();
+                    FirstAlgoritm(e);
+                }
+                else if (MouseButtons == MouseButtons.Left)
+                {
+                    VertexList.Add(new MyPoint() { X = e.X, Y = e.Y });
+                    g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
+                    if (VertexList.Count > 1)
+                    {
+                        g.DrawLine(DrawPen, VertexList[VertexList.Count - 2].ToPoint(), VertexList[VertexList.Count - 1].ToPoint());
+                        pictureBox1.Image = bitmap;
+                    }
+                }
+
+                else if (SplineType == true && VertexList.Count >= 4)
+                {
+                    DrawCubeSpline(DrawPen, VertexList);
+                }
+                else if (MouseButtons == MouseButtons.Right)
+                {
+                    FirstAlgoritm(e);
                 }
             }
-
-            else if (SplineType == true && VertexList.Count >= 4)
+            catch (Exception ex)
             {
-                DrawCubeSpline(DrawPen, VertexList);
-            }
-            else if (MouseButtons == MouseButtons.Right)
-            {
-                FirstAlgoritm(e);
+                MessageBox.Show("Повторите попытку", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -324,6 +331,7 @@ namespace GSK2
             VertexList.Clear();
             pictureBox1.Image = bitmap;
             figures.Clear();
+            MessageBox.Show("Очистка выполнена");
         }
 
         // Выбор сплайна
@@ -476,10 +484,18 @@ namespace GSK2
                 {
                     xrr.Add(pictureBox1.Height);
                 }
-
-                for (int i = 0; i < xrr.Count; i++)
+                try
                 {
-                    g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
+                    for (int i = 0; i < xrr.Count; i++)
+                    {
+                        g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
+
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Наименование: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
         }
@@ -578,30 +594,33 @@ namespace GSK2
         }
         #endregion
 
-        int operation;
+
         #region Геометрические преобразования
+        int operation;
 
         public void TR(object sender, MouseEventArgs e)
         {
-            switch (/*Выбор преобразования*/operation)
-            {
-                case 0:
-                    // Вращение
-                    GeometricTransformations(e);
-                    break;
-                case 1:
-                    // Масштабирование OX
-                    Zoom(e.Delta, e);
-                    break;
-                case 2:
-                    // Масштабирование OY
-                    ZoomY(e.Delta, e);
-                    break;
-                default:
-                    break;
-            }
-            g.Clear(Color.White);
-            FirstAlgoritm(e);
+                switch (/*Выбор преобразования*/operation)
+                {
+                    case 0:
+                        // Вращение
+                        GeometricTransformations(e);
+                        break;
+                    case 1:
+                        // Масштабирование OX
+                        Zoom(e.Delta, e);
+                        break;
+                    case 2:
+                        // Масштабирование OY
+                        ZoomY(e.Delta, e);
+                        break;
+                    default:
+                        break;
+                }
+                g.Clear(Color.White);
+                FirstAlgoritm(e);
+            
+            
         }
 
 
@@ -627,35 +646,8 @@ namespace GSK2
             }
             RotationCenter(center, false, buffer);
         }
-
-        /*Отражение (При отрицательных значениях масштабных коэффициентов происходиn не только изменение размеров, но и зеркальное отражение
-            преобразуемой фигуры*/
-        private void Reflection(char ch)
-        {
-            switch (ch)
-            {
-                case 'X':
-                    float[,] matrixOX =
-                    {
-                        {1, 0,  0 },
-                        {0,-1,  0 },
-                        {0, 0,  1 },
-                    };
-                    break;
-                case 'Y':
-                    float[,] matrixOY =
-                    {
-                        {-1, 0, 0},
-                        { 0, 1, 0},
-                        { 0, 0, 1},
-                    };
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        //Масштабирование
+        #region Масштабирование 
+        //Масштабирование по оси X относительно центра фигуры
         private void Zoom(float zoom, MouseEventArgs eMouse)
         {
             if (zoom <= 0) zoom = -0.1f;
@@ -681,12 +673,13 @@ namespace GSK2
             RotationCenter(e, false, figure);
         }
 
-         private void ZoomY(float zoomY,MouseEventArgs eMouseY)
+        //Масштабирование по оси Y относительно центра фигуры
+        private void ZoomY(float zoomY, MouseEventArgs eMouseY)
         {
             if (zoomY <= 0) zoomY = -0.1f;
             else zoomY = 0.1f;
-            var sxt= operation == 2 ? 1 : zoomY + 1;
-            var syt = 1+zoomY;
+            var sxt = operation == 2 ? 1 : zoomY + 1;
+            var syt = 1 + zoomY;
             float[,] z =
             {
                 {sxt,  0 ,    0},
@@ -705,6 +698,7 @@ namespace GSK2
             RotationCenter(e, false, figure);
 
         }
+        #endregion
 
         //центр фигуры
         private MyPoint CenterFigure()
