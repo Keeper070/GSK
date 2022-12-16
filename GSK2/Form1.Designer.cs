@@ -44,9 +44,9 @@
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.Window;
             this.pictureBox1.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.pictureBox1.Location = new System.Drawing.Point(131, 26);
+            this.pictureBox1.Location = new System.Drawing.Point(85, 12);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(794, 437);
+            this.pictureBox1.Size = new System.Drawing.Size(860, 451);
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
@@ -155,10 +155,12 @@
             // 
             this.comboBox6.FormattingEnabled = true;
             this.comboBox6.Items.AddRange(new object[] {
-            "Поворот на 30"});
-            this.comboBox6.Location = new System.Drawing.Point(717, 497);
+            "Поворот вокруг заданного центра на угол 30 градусов",
+            "Масштабирование по оси X относительно центра фигуры",
+            "Масштабирование по оси Y относительно центра фигуры"});
+            this.comboBox6.Location = new System.Drawing.Point(691, 497);
             this.comboBox6.Name = "comboBox6";
-            this.comboBox6.Size = new System.Drawing.Size(196, 21);
+            this.comboBox6.Size = new System.Drawing.Size(254, 21);
             this.comboBox6.TabIndex = 9;
             this.comboBox6.Text = "Геометрические преобразования";
             this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
