@@ -45,29 +45,21 @@ namespace GSK2
 
         }
 
-        static double Factorial(int n)
-        {
-            double x = 1;
-            for (int i = 1; i <= n; i++)
-                x *= i;
-            return x;
-        }
-
         //Кубический сплайн
         public void DrawCubeSpline(Pen DrPen, List<MyPoint> P)
         {
             PointF[] L = new PointF[4]; // Матрица вещественных коэффициентов
-            MyPoint Pv1 = P[0];
-            MyPoint Pv2 = P[0];
+            Point Pv1 = P[0].ToPoint();
+            Point Pv2 = P[0].ToPoint();
             const double dt = 0.04;
             double t = 0;
             double xt, yt;
-            MyPoint Ppred = P[0], Pt = P[0];
+            Point Ppred = P[0].ToPoint(), Pt = P[0].ToPoint();
             // Касательные векторы
-            Pv1.X = 4 * (P[1].X - P[0].X);
-            Pv1.Y = 4 * (P[1].Y - P[0].Y);
-            Pv2.X = 4 * (P[3].X - P[2].X);
-            Pv2.Y = 4 * (P[3].Y - P[2].Y);
+            Pv1.X = (int)(4 * (P[1].X - P[0].X));
+            Pv1.Y = (int)(4 * (P[1].Y - P[0].Y));
+            Pv2.X = (int)(4 * (P[3].X - P[2].X));
+            Pv2.Y = (int)(4 * (P[3].Y - P[2].Y));
             // Коэффициенты полинома
             L[0].X = 2 * P[0].X - 2 * P[2].X + Pv1.X + Pv2.X; // Ax
             L[0].Y = 2 * P[0].Y - 2 * P[2].Y + Pv1.Y + Pv2.Y; // Ay
@@ -77,17 +69,19 @@ namespace GSK2
             L[2].Y = Pv1.Y; // Cy
             L[3].X = P[0].X; // Dx
             L[3].Y = P[0].Y; // Dy
+            VertexList.Clear();
+            VertexList.Add(new MyPoint(Ppred.X, Ppred.Y));
             while (t < 1 + dt / 2)
             {
                 xt = ((L[0].X * t + L[1].X) * t + L[2].X) * t + L[3].X;
                 yt = ((L[0].Y * t + L[1].Y) * t + L[2].Y) * t + L[3].Y;
                 Pt.X = (int)Math.Round(xt);
                 Pt.Y = (int)Math.Round(yt);
-                g.DrawLine(DrPen, Ppred.ToPoint(), Pt.ToPoint());
+                g.DrawLine(DrPen, Ppred, Pt);
                 pictureBox1.Image = bitmap;
                 Ppred = Pt;
+                VertexList.Add(new MyPoint(Ppred.X, Ppred.Y));
                 t += dt;
-
             }
         }
 
@@ -102,18 +96,26 @@ namespace GSK2
                     g.DrawEllipse(new Pen(Color.Blue), e.X - 2, e.Y - 2, 5, 5);
                     checkPgn = true;
                 }
-                else if (FlagFigure && SplineType == false)
+                else if (FlagFigure)
                 {
-                    CreateFg1(e);
+                    switch (NameNowFigure)
+                    {
+                        case "Fg1":
+                            CreateFg1(e);
+                            break;
+                        case "Zv":
+                            CreateZv(e);
+                            break;
+                        default:
+                            break;
+                    }
+
                     VertexList = figures.Last();
                     FillIn(e);
+                    VertexList = new List<MyPoint>();
+                    FlagFigure = false;
                 }
-                else if (!FlagFigure && SplineType == false)
-                {
-                    CreateZv(e);
-                    VertexList = figures.Last();
-                    FillIn(e);
-                }
+
                 else if (MouseButtons == MouseButtons.Left)
                 {
                     VertexList.Add(new MyPoint() { X = e.X, Y = e.Y });
@@ -124,16 +126,16 @@ namespace GSK2
                         pictureBox1.Image = bitmap;
                     }
                 }
-
                 else if (SplineType == true && VertexList.Count >= 4)
                 {
                     DrawCubeSpline(DrawPen, VertexList);
+                    PaintLine(VertexList);
                 }
                 else if (MouseButtons == MouseButtons.Right)
                 {
                     FillIn(e);
                 }
-               
+
             }
             catch (Exception ex)
             {
@@ -142,19 +144,37 @@ namespace GSK2
             }
         }
 
+        private void PaintLine(List<MyPoint> points)
+        {
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                g.DrawLine(DrawPen, points[i].ToPoint(), points[i + 1].ToPoint());
+            }
+            pictureBox1.Image = bitmap;
+        }
+
         //обработчик события 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && operation == 3 && checkPgn)
+            try
             {
-                Moving(e, e.X - pictureBox1MousePos.X, e.Y - pictureBox1MousePos.Y);
-                g.Clear(pictureBox1.BackColor);
+                if (e.Button == MouseButtons.Left && operation == 3 && checkPgn)
+                {
+                    Moving(e, e.X - pictureBox1MousePos.X, e.Y - pictureBox1MousePos.Y);
+                    g.Clear(pictureBox1.BackColor);
 
-                FillIn(e);
-                pictureBox1.Image = bitmap;
+                    FillIn(e);
+                    pictureBox1.Image = bitmap;
 
-                pictureBox1MousePos = e.Location;
+                    pictureBox1MousePos = e.Location;
 
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Повторите попытку", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
         }
         //алгоритм закрашивание фигуры (внутри)
@@ -338,18 +358,21 @@ namespace GSK2
             }
         }
 
+
+        private string NameNowFigure;
         // Выбор фигур
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var index = comboBox1.SelectedIndex;
-            if (index == 0)
+            switch (comboBox1.SelectedIndex)
             {
-                FlagFigure = true;
+                case 0:
+                    NameNowFigure = "Fg1";
+                    break;
+                case 1:
+                    NameNowFigure = "Zv";
+                    break;
             }
-            else if (index == 1)
-            {
-                FlagFigure = false;
-            }
+            FlagFigure = true;
         }
 
         // Кнопка очистки
@@ -682,15 +705,16 @@ namespace GSK2
         private void Moving(MouseEventArgs e, int dx, int dy)
         {
 
-            
+
             for (int i = 0; i <= VertexList.Count() - 1; i++)
-            { 
+            {
                 MyPoint fP = new MyPoint();
                 fP.X = (VertexList[i].X + dx);
                 fP.Y = (VertexList[i].Y + dy);
                 VertexList[i] = fP;
             }
         }
+
         #region Масштабирование 
         //Масштабирование по оси X относительно центра фигуры
         private void Zoom(float zoom, MouseEventArgs eMouse)
@@ -832,6 +856,8 @@ namespace GSK2
             public float Z { get; set; }
             public MyPoint(float X = 0, float Y = 0, float Z = 1)
             {
+                this.X = X;
+                this.Y = Y;
             }
 
             public Point ToPoint()
