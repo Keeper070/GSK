@@ -12,11 +12,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace GSK2
 {
     public partial class Form1 : Form
     {
+
         Graphics g;
         Pen DrawPen = new Pen(Color.Black, 1);
         List<MyPoint> VertexList = new List<MyPoint>();
@@ -24,7 +26,9 @@ namespace GSK2
         bool SplineType = false;
         bool FlagFigure = false;
         int cornersCount;
+        Point pictureBox1MousePos = new Point();
         Bitmap bitmap;
+        bool checkPgn = false;
         public M[] m;
 
         int yMin;
@@ -38,6 +42,7 @@ namespace GSK2
             bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
             g = Graphics.FromImage(bitmap);
             MouseWheel += TR;
+
         }
 
         static double Factorial(int n)
@@ -86,22 +91,28 @@ namespace GSK2
             }
         }
 
-        //обработчик события 
+        //обработчик нажатия
         private void pictureBox1_MouseDown(object sender, MouseEventArgs e)
         {
+            pictureBox1MousePos = e.Location;
             try
             {
-                if (FlagFigure && SplineType == false)
+                if (ThisPgn(e.X, e.Y))
+                {
+                    g.DrawEllipse(new Pen(Color.Blue), e.X - 2, e.Y - 2, 5, 5);
+                    checkPgn = true;
+                }
+                else if (FlagFigure && SplineType == false)
                 {
                     CreateFg1(e);
                     VertexList = figures.Last();
-                    FirstAlgoritm(e);
+                    FillIn(e);
                 }
                 else if (!FlagFigure && SplineType == false)
                 {
                     CreateZv(e);
                     VertexList = figures.Last();
-                    FirstAlgoritm(e);
+                    FillIn(e);
                 }
                 else if (MouseButtons == MouseButtons.Left)
                 {
@@ -120,17 +131,34 @@ namespace GSK2
                 }
                 else if (MouseButtons == MouseButtons.Right)
                 {
-                    FirstAlgoritm(e);
+                    FillIn(e);
                 }
+               
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Повторите попытку", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
         }
 
+        //обработчик события 
+        private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && operation == 3 && checkPgn)
+            {
+                Moving(e, e.X - pictureBox1MousePos.X, e.Y - pictureBox1MousePos.Y);
+                g.Clear(pictureBox1.BackColor);
+
+                FillIn(e);
+                pictureBox1.Image = bitmap;
+
+                pictureBox1MousePos = e.Location;
+
+            }
+        }
         //алгоритм закрашивание фигуры (внутри)
-        private void FirstAlgoritm(MouseEventArgs e)
+        private void FillIn(MouseEventArgs e)
         {
             int k;
             List<int> xb = new List<int>();
@@ -332,6 +360,7 @@ namespace GSK2
             pictureBox1.Image = bitmap;
             figures.Clear();
             MessageBox.Show("Очистка выполнена");
+
         }
 
         // Выбор сплайна
@@ -375,6 +404,7 @@ namespace GSK2
         #region ТМО
         //ТМО
         int[] setQ = new int[2];
+
 
         private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -517,6 +547,7 @@ namespace GSK2
             }
         }
 
+
         // Для обработки исходных границ сегментов
         public class M
         {
@@ -600,27 +631,26 @@ namespace GSK2
 
         public void TR(object sender, MouseEventArgs e)
         {
-                switch (/*Выбор преобразования*/operation)
-                {
-                    case 0:
-                        // Вращение
-                        GeometricTransformations(e);
-                        break;
-                    case 1:
-                        // Масштабирование OX
-                        Zoom(e.Delta, e);
-                        break;
-                    case 2:
-                        // Масштабирование OY
-                        ZoomY(e.Delta, e);
-                        break;
-                    default:
-                        break;
-                }
-                g.Clear(Color.White);
-                FirstAlgoritm(e);
-            
-            
+            switch (/*Выбор преобразования*/operation)
+            {
+                case 0:
+                    // Вращение
+                    GeometricTransformations(e);
+                    break;
+                case 1:
+                    // Масштабирование OX
+                    Zoom(e.Delta, e);
+                    break;
+                case 2:
+                    // Масштабирование OY
+                    ZoomY(e.Delta, e);
+                    break;
+                default:
+                    break;
+            }
+            g.Clear(Color.White);
+            FillIn(e);
+
         }
 
 
@@ -645,6 +675,21 @@ namespace GSK2
                 VertexList[i] = СalculatinTheMatrix(matrixR30, VertexList[i]);
             }
             RotationCenter(center, false, buffer);
+        }
+
+
+        //Плоскопараллельное перемещение
+        private void Moving(MouseEventArgs e, int dx, int dy)
+        {
+
+            
+            for (int i = 0; i <= VertexList.Count() - 1; i++)
+            { 
+                MyPoint fP = new MyPoint();
+                fP.X = (VertexList[i].X + dx);
+                fP.Y = (VertexList[i].Y + dy);
+                VertexList[i] = fP;
+            }
         }
         #region Масштабирование 
         //Масштабирование по оси X относительно центра фигуры
@@ -756,6 +801,28 @@ namespace GSK2
             Y = pointGt.X * matrixR30[0, 1] + pointGt.Y * matrixR30[1, 1] + pointGt.Z * matrixR30[2, 1],
             Z = pointGt.X * matrixR30[0, 2] + pointGt.Y * matrixR30[1, 2] + pointGt.Z * matrixR30[2, 2]
         };
+
+        // выделение многоугольника
+        public bool ThisPgn(int mX, int mY)
+        {
+            int n = VertexList.Count() - 1, k = 0, m = 0; MyPoint Pi, Pk;
+            double x;
+            bool check = false;
+            for (int i = 0; i <= n; i++)
+            {
+                if (i < n) k = i + 1; else k = 0;
+                Pi = VertexList[i]; Pk = VertexList[k];
+                if ((Pi.Y < mY) && (Pk.Y >= mY) || (Pi.Y >= mY) && (Pk.Y < mY))
+                {
+                    if ((mY - Pi.Y) * (Pk.X - Pi.X) / (Pk.Y - Pi.Y) + Pi.X < mX)
+                        m++;
+                }
+            }
+            if (m % 2 == 1) check = true;
+            return check;
+        }
+
+
 
         // структура описывающая точку в трехмерном пространстве
         public class MyPoint
