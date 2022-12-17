@@ -1,84 +1,74 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace GSK2
 {
     public partial class Form1 : Form
     {
-
-        Graphics g;
-        Pen DrawPen = new Pen(Color.Black, 1);
+        readonly Graphics g;
+        readonly Pen DrawPen = new Pen(Color.Black, 1);
         List<MyPoint> VertexList = new List<MyPoint>();
-        private List<List<MyPoint>> figures = new List<List<MyPoint>>();
-        bool SplineType = false;
-        bool FlagFigure = false;
-        int cornersCount;
-        Point pictureBox1MousePos = new Point();
-        Bitmap bitmap;
-        bool checkPgn = false;
-        public M[] m;
+        private readonly List<List<MyPoint>> _figures = new List<List<MyPoint>>();
+        bool _splineType;
+        bool _flagFigure;
+        int _cornersCount;
+        Point pictureBox1MousePos;
+        readonly Bitmap _bitmap;
+        bool checkPgn;
+        private M[] _m;
 
         int yMin;
         int yMax;
         int xMin;
         int xMax;
 
+        private string _nameNowFigure;
+
         public Form1()
         {
             InitializeComponent();
-            bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            g = Graphics.FromImage(bitmap);
+            _bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
+            g = Graphics.FromImage(_bitmap);
             MouseWheel += TR;
-
         }
 
         //Кубический сплайн
-        public void DrawCubeSpline(Pen DrPen, List<MyPoint> P)
+        private void DrawCubeSpline(Pen drPen, List<MyPoint> p)
         {
             PointF[] L = new PointF[4]; // Матрица вещественных коэффициентов
-            Point Pv1 = P[0].ToPoint();
-            Point Pv2 = P[0].ToPoint();
+            Point Pv1 = p[0].ToPoint();
+            Point Pv2 = p[0].ToPoint();
             const double dt = 0.04;
             double t = 0;
             double xt, yt;
-            Point Ppred = P[0].ToPoint(), Pt = P[0].ToPoint();
+            Point Ppred = p[0].ToPoint(), Pt = p[0].ToPoint();
             // Касательные векторы
-            Pv1.X = (int)(4 * (P[1].X - P[0].X));
-            Pv1.Y = (int)(4 * (P[1].Y - P[0].Y));
-            Pv2.X = (int)(4 * (P[3].X - P[2].X));
-            Pv2.Y = (int)(4 * (P[3].Y - P[2].Y));
+            Pv1.X = (int) (4 * (p[1].X - p[0].X));
+            Pv1.Y = (int) (4 * (p[1].Y - p[0].Y));
+            Pv2.X = (int) (4 * (p[3].X - p[2].X));
+            Pv2.Y = (int) (4 * (p[3].Y - p[2].Y));
             // Коэффициенты полинома
-            L[0].X = 2 * P[0].X - 2 * P[2].X + Pv1.X + Pv2.X; // Ax
-            L[0].Y = 2 * P[0].Y - 2 * P[2].Y + Pv1.Y + Pv2.Y; // Ay
-            L[1].X = -3 * P[0].X + 3 * P[2].X - 2 * Pv1.X - Pv2.X; // Bx
-            L[1].Y = -3 * P[0].Y + 3 * P[2].Y - 2 * Pv1.Y - Pv2.Y; // By
+            L[0].X = 2 * p[0].X - 2 * p[2].X + Pv1.X + Pv2.X; // Ax
+            L[0].Y = 2 * p[0].Y - 2 * p[2].Y + Pv1.Y + Pv2.Y; // Ay
+            L[1].X = -3 * p[0].X + 3 * p[2].X - 2 * Pv1.X - Pv2.X; // Bx
+            L[1].Y = -3 * p[0].Y + 3 * p[2].Y - 2 * Pv1.Y - Pv2.Y; // By
             L[2].X = Pv1.X; // Cx
             L[2].Y = Pv1.Y; // Cy
-            L[3].X = P[0].X; // Dx
-            L[3].Y = P[0].Y; // Dy
+            L[3].X = p[0].X; // Dx
+            L[3].Y = p[0].Y; // Dy
             VertexList.Clear();
-            VertexList.Add(new MyPoint(Ppred.X, Ppred.Y) { IsFunc = true });
+            VertexList.Add(new MyPoint(Ppred.X, Ppred.Y) {IsFunc = true});
             while (t < 1 + dt / 2)
             {
                 xt = ((L[0].X * t + L[1].X) * t + L[2].X) * t + L[3].X;
                 yt = ((L[0].Y * t + L[1].Y) * t + L[2].Y) * t + L[3].Y;
-                Pt.X = (int)Math.Round(xt);
-                Pt.Y = (int)Math.Round(yt);
-                g.DrawLine(DrPen, Ppred, Pt);
-                pictureBox1.Image = bitmap;
+                Pt.X = (int) Math.Round(xt);
+                Pt.Y = (int) Math.Round(yt);
+                g.DrawLine(drPen, Ppred, Pt);
+                pictureBox1.Image = _bitmap;
                 Ppred = Pt;
                 VertexList.Add(new MyPoint(Ppred.X, Ppred.Y));
                 t += dt;
@@ -96,9 +86,9 @@ namespace GSK2
                     g.DrawEllipse(new Pen(Color.Blue), e.X - 2, e.Y - 2, 5, 5);
                     checkPgn = true;
                 }
-                else if (FlagFigure)
+                else if (_flagFigure)
                 {
-                    switch (NameNowFigure)
+                    switch (_nameNowFigure)
                     {
                         case "Fg1":
                             CreateFg1(e);
@@ -110,10 +100,10 @@ namespace GSK2
                             break;
                     }
 
-                    VertexList = figures.Last();
+                    VertexList = _figures.Last();
                     FillIn(VertexList);
                     VertexList = new List<MyPoint>();
-                    FlagFigure = false;
+                    _flagFigure = false;
                 }
 
                 else if (MouseButtons == MouseButtons.Left)
@@ -122,26 +112,26 @@ namespace GSK2
                     g.DrawEllipse(DrawPen, e.X - 2, e.Y - 2, 5, 5);
                     if (VertexList.Count > 1)
                     {
-                        g.DrawLine(DrawPen, VertexList[VertexList.Count - 2].ToPoint(), VertexList[VertexList.Count - 1].ToPoint());
-                        pictureBox1.Image = bitmap;
+                        g.DrawLine(DrawPen, VertexList[VertexList.Count - 2].ToPoint(),
+                            VertexList[VertexList.Count - 1].ToPoint());
+                        pictureBox1.Image = _bitmap;
                     }
                 }
-                else if (SplineType == true && VertexList.Count >= 4)
+                else if (_splineType && VertexList.Count >= 4)
                 {
                     DrawCubeSpline(DrawPen, VertexList);
                     PaintLine(VertexList);
-                    figures.Add(VertexList.ToList());
+                    _figures.Add(VertexList.ToList());
                     VertexList.Clear();
                 }
                 else if (MouseButtons == MouseButtons.Right)
                 {
                     FillIn(VertexList);
-                    figures.Add(VertexList.ToList());
+                    _figures.Add(VertexList.ToList());
                     VertexList.Clear();
                 }
-
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 MessageBox.Show("Повторите попытку", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -154,7 +144,8 @@ namespace GSK2
             {
                 g.DrawLine(DrawPen, points[i].ToPoint(), points[i + 1].ToPoint());
             }
-            pictureBox1.Image = bitmap;
+
+            pictureBox1.Image = _bitmap;
         }
 
         //обработчик события 
@@ -168,12 +159,10 @@ namespace GSK2
                     g.Clear(pictureBox1.BackColor);
 
                     FillIn(VertexList);
-                    pictureBox1.Image = bitmap;
+                    pictureBox1.Image = _bitmap;
 
                     pictureBox1MousePos = e.Location;
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -181,6 +170,7 @@ namespace GSK2
                 return;
             }
         }
+
         //алгоритм закрашивание фигуры (внутри)
         private void FillIn(List<MyPoint> points)
         {
@@ -189,6 +179,7 @@ namespace GSK2
                 PaintLine(points);
                 return;
             }
+
             int k;
             List<int> xb = new List<int>();
             SearchMinAndMax(points);
@@ -208,7 +199,7 @@ namespace GSK2
                         var x = -((Y * (points[i].X - points[k].X)) - points[i].X * points[k].Y +
                                   points[k].X * points[i].Y)
                                 / (points[k].Y - points[i].Y);
-                        xb.Add((int)x);
+                        xb.Add((int) x);
                     }
                 }
 
@@ -219,7 +210,7 @@ namespace GSK2
                               points[points.Count - 1].X * points[0].Y +
                               points[0].X * points[points.Count - 1].Y)
                             / (points[0].Y - points[points.Count - 1].Y);
-                    xb.Add((int)x);
+                    xb.Add((int) x);
                 }
 
                 xb.Sort();
@@ -228,7 +219,7 @@ namespace GSK2
                     g.DrawLine(DrawPen, new Point(xb[i], Y), new Point(xb[i + 1], Y));
                 }
 
-                pictureBox1.Image = bitmap;
+                pictureBox1.Image = _bitmap;
             }
         }
 
@@ -254,56 +245,57 @@ namespace GSK2
         }*/
 
         #region Поиск минимума и максимума фигур
+
         // Поиск Ymin и Ymax
         private List<int> SearchMinAndMax(List<MyPoint> VertexList)
         {
-            yMin = (int)VertexList[0].Y;
-            yMax = (int)VertexList[0].Y;
+            yMin = (int) VertexList[0].Y;
+            yMax = (int) VertexList[0].Y;
 
             foreach (MyPoint p in VertexList)
             {
                 if (p.Y < yMin)
                 {
-                    yMin = (int)p.Y;
+                    yMin = (int) p.Y;
                 }
                 else if (yMax < p.Y)
                 {
-                    yMax = (int)p.Y;
+                    yMax = (int) p.Y;
                 }
-
             }
 
             yMin = yMin < 0 ? 0 : yMin;
             yMax = yMax < pictureBox1.Height ? yMax : pictureBox1.Height;
-            return new List<int> { yMin, yMax };
+            return new List<int> {yMin, yMax};
         }
 
         //Поиск Xmin и Xmax
         private List<int> SearchXMinAndMax(List<MyPoint> VertexList)
         {
-            xMin = (int)VertexList[0].Y;
-            xMax = (int)VertexList[0].Y;
+            xMin = (int) VertexList[0].Y;
+            xMax = (int) VertexList[0].Y;
 
             foreach (MyPoint p in VertexList)
             {
                 if (p.Y < xMin)
                 {
-                    xMin = (int)p.Y;
+                    xMin = (int) p.Y;
                 }
                 else if (xMax < p.Y)
                 {
-                    xMax = (int)p.Y;
+                    xMax = (int) p.Y;
                 }
-
             }
 
             xMin = xMin < 0 ? 0 : xMin;
             xMax = xMax < pictureBox1.Height ? xMax : pictureBox1.Height;
-            return new List<int> { xMin, xMax };
+            return new List<int> {xMin, xMax};
         }
+
         #endregion
 
         #region Создание Фигур
+
         //Создание Фигуры 1
         private void CreateFg1(MouseEventArgs e)
         {
@@ -314,10 +306,10 @@ namespace GSK2
                 new MyPoint(e.X - 50, e.Y),
                 new MyPoint(e.X, e.Y - 100),
                 new MyPoint(e.X + 50, e.Y),
-                new MyPoint(e.X + 150,e.Y),
+                new MyPoint(e.X + 150, e.Y),
                 new MyPoint(e.X + 150, e.Y + 100)
             };
-            figures.Add(fg);
+            _figures.Add(fg);
         }
 
         // Создание фигуры Звезда 
@@ -326,17 +318,18 @@ namespace GSK2
             const double R = 25;
             const double r = 50;
             const double d = 0;
-            double a = d, da = Math.PI / cornersCount, l;
+            double a = d, da = Math.PI / _cornersCount, l;
             var star = new List<MyPoint>();
-            for (var k = 0; k < 2 * cornersCount + 1; k++)
+            for (var k = 0; k < 2 * _cornersCount + 1; k++)
             {
                 l = k % 2 == 0 ? r : R;
-                star.Add(new MyPoint() { X = ((float)(e.X + l * Math.Cos(a))), Y = ((float)(e.Y + l * Math.Sin(a))) });
+                star.Add(new MyPoint() {X = ((float) (e.X + l * Math.Cos(a))), Y = ((float) (e.Y + l * Math.Sin(a)))});
                 a += da;
             }
 
-            figures.Add(star);
+            _figures.Add(star);
         }
+
         #endregion
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -367,21 +360,20 @@ namespace GSK2
             }
         }
 
-
-        private string NameNowFigure;
         // Выбор фигур
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             switch (comboBox1.SelectedIndex)
             {
                 case 0:
-                    NameNowFigure = "Fg1";
+                    _nameNowFigure = "Fg1";
                     break;
                 case 1:
-                    NameNowFigure = "Zv";
+                    _nameNowFigure = "Zv";
                     break;
             }
-            FlagFigure = true;
+
+            _flagFigure = true;
         }
 
         // Кнопка очистки
@@ -389,24 +381,17 @@ namespace GSK2
         {
             g.Clear(Color.White);
             VertexList.Clear();
-            pictureBox1.Image = bitmap;
-            figures.Clear();
+            pictureBox1.Image = _bitmap;
+            _figures.Clear();
             MessageBox.Show("Очистка выполнена");
-
         }
 
         // Выбор сплайна
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            SplineType = checkBox1.Checked;
-
-        }
+        private void checkBox1_CheckedChanged(object sender, EventArgs e) => _splineType = checkBox1.Checked;
 
         // Колличество углов
-        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            cornersCount = comboBox3.SelectedIndex + 5;
-        }
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e) =>
+            _cornersCount = comboBox3.SelectedIndex + 5;
 
         // Фигуры
         public enum Figures
@@ -434,6 +419,7 @@ namespace GSK2
         }*/
 
         #region ТМО
+
         //ТМО
         int[] setQ = new int[2];
 
@@ -461,16 +447,16 @@ namespace GSK2
             List<int> Xbr = new List<int>();
             List<int> xrl = new List<int>();
             List<int> xrr = new List<int>();
-            var s1Figure = SearchMinAndMax(figures[0]);
-            var s2Figure = SearchMinAndMax(figures[1]);
+            var s1Figure = SearchMinAndMax(_figures[0]);
+            var s2Figure = SearchMinAndMax(_figures[1]);
             var yMin = s1Figure[0] < s2Figure[0] ? s1Figure[0] : s2Figure[0];
             var yMax = s1Figure[1] < s2Figure[1] ? s2Figure[1] : s1Figure[1];
             for (int Y = yMin; Y < yMax; Y++)
             {
-                var oneFigure = CalculationXlAndXr(figures[0], Y);
+                var oneFigure = CalculationXlAndXr(_figures[0], Y);
                 Xal = oneFigure[0];
                 Xar = oneFigure[1];
-                var secondFigure = CalculationXlAndXr(figures[1], Y);
+                var secondFigure = CalculationXlAndXr(_figures[1], Y);
                 Xbl = secondFigure[0];
                 Xbr = secondFigure[1];
                 if (Xal.Count == 0 && Xbl.Count == 0)
@@ -480,31 +466,31 @@ namespace GSK2
 
                 int n = Xal.Count;
                 int nM;
-                m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
+                _m = new M[Xal.Count + Xar.Count + Xbl.Count + Xbr.Count];
                 for (int i = 0; i < n; i++)
                 {
-                    m[i] = new M(Xal[i], 2);
+                    _m[i] = new M(Xal[i], 2);
                 }
 
                 nM = n;
                 n = Xar.Count;
                 for (int i = 0; i < n; i++)
                 {
-                    m[i + nM] = new M(Xar[i], -2);
+                    _m[i + nM] = new M(Xar[i], -2);
                 }
 
                 nM = nM + n;
                 n = Xbl.Count;
                 for (int i = 0; i < n; i++)
                 {
-                    m[nM + i] = new M(Xbl[i], 1);
+                    _m[nM + i] = new M(Xbl[i], 1);
                 }
 
                 nM = nM + n;
                 n = Xbr.Count;
                 for (int i = 0; i < n; i++)
                 {
-                    m[nM + i] = new M(Xbr[i], -1);
+                    _m[nM + i] = new M(Xbr[i], -1);
                 }
 
                 nM += n;
@@ -518,16 +504,16 @@ namespace GSK2
                 xrl.Clear();
                 xrr.Clear();
 
-                if (m[0].x >= 0 && m[0].dQ < 0)
+                if (_m[0].x >= 0 && _m[0].dQ < 0)
                 {
                     xrl.Add(0);
-                    q = -m[0].dQ;
+                    q = -_m[0].dQ;
                 }
 
                 for (int i = 0; i < nM; i++)
                 {
-                    int x = m[i].x;
-                    int Qnew = q + m[i].dQ;
+                    int x = _m[i].x;
+                    int Qnew = q + _m[i].dQ;
                     if (!(setQ[0] <= q && q <= setQ[1]) && setQ[0] <= Qnew && Qnew <= setQ[1])
                     {
                         xrl.Add(x);
@@ -546,17 +532,18 @@ namespace GSK2
                 {
                     xrr.Add(pictureBox1.Height);
                 }
+
                 try
                 {
                     for (int i = 0; i < xrr.Count; i++)
                     {
                         g.DrawLine(DrawPen, new Point(xrr[i], Y), new Point(xrl[i], Y));
-
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Наименование: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Наименование: " + ex.Message, "Ошибка", MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                     return;
                 }
             }
@@ -565,15 +552,15 @@ namespace GSK2
         //сортировка массива пузырьковым методом
         private void SortArrayM()
         {
-            for (var i = 0; i < m.Length; i++)
+            for (var i = 0; i < _m.Length; i++)
             {
-                for (var j = 0; j < m.Length - 1; j++)
+                for (var j = 0; j < _m.Length - 1; j++)
                 {
-                    if (m[j].x > m[j + 1].x)
+                    if (_m[j].x > _m[j + 1].x)
                     {
-                        var buffSort = new M(m[j + 1].x, m[j + 1].dQ);
-                        m[j + 1] = m[j];
-                        m[j] = buffSort;
+                        var buffSort = new M(_m[j + 1].x, _m[j + 1].dQ);
+                        _m[j + 1] = _m[j];
+                        _m[j] = buffSort;
                     }
                 }
             }
@@ -618,11 +605,11 @@ namespace GSK2
 
                     if (VertexList[i].Y < VertexList[k].Y)
                     {
-                        xR.Add((int)x);
+                        xR.Add((int) x);
                     }
                     else if (VertexList[i].Y > VertexList[k].Y)
                     {
-                        xL.Add((int)x);
+                        xL.Add((int) x);
                     }
                 }
             }
@@ -646,24 +633,26 @@ namespace GSK2
         //кнопка для применения тмо
         private void button2_Click(object sender, EventArgs e)
         {
-            if (figures.Count > 1)
+            if (_figures.Count > 1)
             {
                 g.Clear(Color.White);
                 Tmo();
             }
 
             VertexList.Clear();
-            pictureBox1.Image = bitmap;
+            pictureBox1.Image = _bitmap;
         }
+
         #endregion
 
 
         #region Геометрические преобразования
+
         int operation;
 
         public void TR(object sender, MouseEventArgs e)
         {
-            switch (/*Выбор преобразования*/operation)
+            switch ( /*Выбор преобразования*/operation)
             {
                 case 0:
                     // Вращение
@@ -680,32 +669,32 @@ namespace GSK2
                 default:
                     break;
             }
-            g.Clear(Color.White);
-            FillIn(figures[figures.Count - 1]);
 
+            g.Clear(Color.White);
+            FillIn(_figures[_figures.Count - 1]);
         }
 
 
         // Вращение
         private void Rotation(MouseEventArgs e)
         {
-            var buffer = figures[figures.Count - 1];
-            var center = new MyPoint() { X = e.X, Y = e.Y };
+            var buffer = _figures[_figures.Count - 1];
+            var center = new MyPoint {X = e.X, Y = e.Y};
             RotationCenter(center, true, buffer);
-            var alhpa = 0.0575;
+            const double alpha = 0.575;
 
             //вращение
-            float[,] matrixR30 = new[,]
+            var matrixR30 = new[,]
             {
-                { (float)  Math.Cos(alhpa),     (float) Math.Sin(alhpa),   0},
-                { (float) -Math.Sin(alhpa),     (float) Math.Cos(alhpa),   0},
-                { 0,                            0,                         1}
+                {(float) Math.Cos(alpha), (float) Math.Sin(alpha), 0},
+                {(float) -Math.Sin(alpha), (float) Math.Cos(alpha), 0},
+                {0, 0, 1}
             };
+            
             // изменяем координату вершины фигуры
-            for (int i = 0; i < buffer.Count; i++)
-            {
+            for (var i = 0; i < buffer.Count; i++) 
                 buffer[i] = СalculatinTheMatrix(matrixR30, buffer[i]);
-            }
+
             RotationCenter(center, false, buffer);
         }
 
@@ -713,9 +702,7 @@ namespace GSK2
         //Плоскопараллельное перемещение
         private void Moving(MouseEventArgs e, int dx, int dy)
         {
-
-
-            for (int i = 0; i <= VertexList.Count() - 1; i++)
+            for (int i = 0; i <= VertexList.Count - 1; i++)
             {
                 MyPoint fP = new MyPoint();
                 fP.X = (VertexList[i].X + dx);
@@ -724,7 +711,8 @@ namespace GSK2
             }
         }
 
-        #region Масштабирование 
+        #region Масштабирование
+
         //Масштабирование по оси X относительно центра фигуры
         private void Zoom(float zoom, MouseEventArgs eMouse)
         {
@@ -735,12 +723,12 @@ namespace GSK2
             var syt = 1;
             float[,] z =
             {
-                {sxt,  0 ,    0},
-                {0,    syt, 0},
-                {0,    0,   1}
+                {sxt, 0, 0},
+                {0, syt, 0},
+                {0, 0, 1}
             };
             var e = CenterFigure();
-            var figure = figures[figures.Count - 1];
+            var figure = _figures[_figures.Count - 1];
             RotationCenter(e, true, figure);
 
             for (int i = 0; i < VertexList.Count; i++)
@@ -760,12 +748,12 @@ namespace GSK2
             var syt = 1 + zoomY;
             float[,] z =
             {
-                {sxt,  0 ,    0},
-                {0,    syt, 0},
-                {0,    0,   1}
+                {sxt, 0, 0},
+                {0, syt, 0},
+                {0, 0, 1}
             };
             var e = CenterFigure();
-            var figure = figures[figures.Count - 1];
+            var figure = _figures[_figures.Count - 1];
             RotationCenter(e, true, figure);
 
             for (int i = 0; i < VertexList.Count; i++)
@@ -774,18 +762,18 @@ namespace GSK2
             }
 
             RotationCenter(e, false, figure);
-
         }
+
         #endregion
 
         //центр фигуры
         private MyPoint CenterFigure()
         {
-            SearchMinAndMax(figures[figures.Count - 1]);
+            SearchMinAndMax(_figures[_figures.Count - 1]);
             var xCenter = xMax - xMin / 2 + xMin;
             var yCenter = yMax - yMin / 2 + yMin;
 
-            return new MyPoint() { X = xCenter, Y = yCenter };
+            return new MyPoint() {X = xCenter, Y = yCenter};
         }
 
         // Перемещение относительно центра с координатами
@@ -796,14 +784,13 @@ namespace GSK2
                 //массив для перемищения в начало координат
                 float[,] toCenter =
                 {
-                    {1,0,0},
-                    {0,1,0},
-                    {-center.X,-center.Y,1}
+                    {1, 0, 0},
+                    {0, 1, 0},
+                    {-center.X, -center.Y, 1}
                 };
                 for (int i = 0; i < points.Count; i++)
                 {
                     points[i] = СalculatinTheMatrix(toCenter, points[i]);
-
                 }
             }
             else
@@ -811,16 +798,15 @@ namespace GSK2
                 //Из начала координат
                 float[,] fromCenter =
                 {
-                    {1,0,0},
-                    {0,1,0},
-                    {center.X,center.Y,1}
+                    {1, 0, 0},
+                    {0, 1, 0},
+                    {center.X, center.Y, 1}
                 };
                 for (int i = 0; i < points.Count; i++)
                 {
                     points[i] = СalculatinTheMatrix(fromCenter, points[i]);
                 }
             }
-
         }
 
         private void comboBox6_SelectedIndexChanged(object sender, EventArgs e) => operation = comboBox6.SelectedIndex;
@@ -837,23 +823,26 @@ namespace GSK2
         // выделение многоугольника
         public bool ThisPgn(int mX, int mY)
         {
-            int n = VertexList.Count() - 1, k = 0, m = 0; MyPoint Pi, Pk;
+            int n = VertexList.Count() - 1, k = 0, m = 0;
+            MyPoint Pi, Pk;
             double x;
             bool check = false;
             for (int i = 0; i <= n; i++)
             {
-                if (i < n) k = i + 1; else k = 0;
-                Pi = VertexList[i]; Pk = VertexList[k];
+                if (i < n) k = i + 1;
+                else k = 0;
+                Pi = VertexList[i];
+                Pk = VertexList[k];
                 if ((Pi.Y < mY) && (Pk.Y >= mY) || (Pi.Y >= mY) && (Pk.Y < mY))
                 {
                     if ((mY - Pi.Y) * (Pk.X - Pi.X) / (Pk.Y - Pi.Y) + Pi.X < mX)
                         m++;
                 }
             }
+
             if (m % 2 == 1) check = true;
             return check;
         }
-
 
 
         // структура описывающая точку в трехмерном пространстве
@@ -863,27 +852,21 @@ namespace GSK2
             public float Y { get; set; }
             public float Z { get; set; }
             public bool IsFunc { get; set; }
-            public MyPoint(float X, float Y, float Z = 1)
+
+            public MyPoint(float x = 0.0f, float y = 0.0f, float z = 1.0f)
             {
-                this.X = X;
-                this.Y = Y;
+                X = x;
+                Y = y;
+                Z = z;
                 IsFunc = false;
-            }
-            public MyPoint()
-            {
-                X = 0;
-                Y = 0;
-                Z = 1;
             }
 
             public Point ToPoint()
             {
-
-                return new Point((int)X, (int)Y);
+                return new Point((int) X, (int) Y);
             }
         }
+
         #endregion
     }
-
-
 }
