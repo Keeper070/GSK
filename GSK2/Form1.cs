@@ -26,12 +26,15 @@ namespace GSK2
         int xMax;
 
         private string _nameNowFigure;
+        
+        // Выбор операции
+        private int _operation;
 
         public Form1()
         {
             InitializeComponent();
             _bitmap = new Bitmap(pictureBox1.Width, pictureBox1.Height);
-            g = Graphics.FromImage(_bitmap);
+            _g = Graphics.FromImage(_bitmap);
             MouseWheel += TR;
         }
 
@@ -189,6 +192,7 @@ namespace GSK2
                 xb.Clear();
                 for (int i = 0; i < points.Count - 1; i++)
                 {
+                    int k;
                     if (i < points.Count)
                     {
                         k = i + 1;
@@ -207,7 +211,7 @@ namespace GSK2
                 if (points[points.Count - 1].Y < Y && points[0].Y >= Y ||
                     points[points.Count - 1].Y >= Y && points[0].Y < Y)
                 {
-                    var x = -((Y * (points[points.Count - 1].X - points[0].X)) -
+                    var x = -((y * (points[points.Count - 1].X - points[0].X)) -
                               points[points.Count - 1].X * points[0].Y +
                               points[0].X * points[points.Count - 1].Y)
                             / (points[0].Y - points[points.Count - 1].Y);
@@ -418,12 +422,8 @@ namespace GSK2
 
         private void Tmo()
         {
-            List<int> Xal = new List<int>();
-            List<int> Xar = new List<int>();
-            List<int> Xbl = new List<int>();
-            List<int> Xbr = new List<int>();
-            List<int> xrl = new List<int>();
-            List<int> xrr = new List<int>();
+            var xrl = new List<int>();
+            var xrr = new List<int>();
             var s1Figure = SearchMinAndMax(_figures[0]);
             var s2Figure = SearchMinAndMax(_figures[1]);
             var yMin = s1Figure[0] < s2Figure[0] ? s1Figure[0] : s2Figure[0];
@@ -625,39 +625,50 @@ namespace GSK2
 
         #region Геометрические преобразования
 
-        int operation;
-
-        public void TR(object sender, MouseEventArgs e)
+        private void TR(object sender, MouseEventArgs e)
         {
-            switch ( /*Выбор преобразования*/operation)
+            switch ( /*Выбор преобразования*/_operation)
+            {
+                TR(e, figureBuff);
+                TR(e, _figures[_figures.Count - 2]);
+                _g.Clear(Color.White);
+                Tmo();
+                pictureBox1.Image = _bitmap;
+            }
+            else
+                TR(e, figureBuff);
+        }
+
+        private void TR(MouseEventArgs e, List<MyPoint> points) // Нужно прокидывать через метод фигуру,
+            // над которой мы делаем преобразование, поэтому передаю список точек.
+            // Далее прокидываем этот списко точек в каждый метод геометр преобразования
+        {
+            switch (_operation)
             {
                 case 0:
                     // Вращение
-                    Rotation(e);
+                    Rotation(e, points);
                     break;
                 case 1:
                     // Масштабирование OX
-                    Zoom(e.Delta, e);
+                    Zoom(e.Delta);
                     break;
                 case 2:
                     // Масштабирование OY
-                    ZoomY(e.Delta, e);
-                    break;
-                default:
+                    ZoomY(e.Delta);
                     break;
             }
 
-            g.Clear(Color.White);
+            _g.Clear(Color.White);
             FillIn(_figures[_figures.Count - 1]);
         }
 
 
         // Вращение
-        private void Rotation(MouseEventArgs e)
+        private void Rotation(MouseEventArgs e, List<MyPoint> points)
         {
-            var buffer = _figures[_figures.Count - 1];
             var center = new MyPoint {X = e.X, Y = e.Y};
-            RotationCenter(center, true, buffer);
+            RotationCenter(center, true, points);
             const double alpha = 0.575;
 
             //вращение
@@ -669,10 +680,10 @@ namespace GSK2
             };
             
             // изменяем координату вершины фигуры
-            for (var i = 0; i < buffer.Count; i++) 
-                buffer[i] = СalculatinTheMatrix(matrixR30, buffer[i]);
+            for (var i = 0; i < buffer.Count; i++)
+                buffer[i] = СalculationMatrix(matrixR30, buffer[i]);
 
-            RotationCenter(center, false, buffer);
+            RotationCenter(center, false, points);
         }
 
 
@@ -691,7 +702,7 @@ namespace GSK2
         #region Масштабирование
 
         //Масштабирование по оси X относительно центра фигуры
-        private void Zoom(float zoom, MouseEventArgs eMouse)
+        private void Zoom(float zoom)
         {
             if (zoom <= 0) zoom = -0.1f;
             else zoom = 0.1f;
@@ -705,19 +716,16 @@ namespace GSK2
                 {0, 0, 1}
             };
             var e = CenterFigure();
-            var figure = _figures[_figures.Count - 1];
-            RotationCenter(e, true, figure);
+            RotationCenter(e, true, points);
 
-            for (int i = 0; i < VertexList.Count; i++)
-            {
-                VertexList[i] = СalculatinTheMatrix(z, VertexList[i]);
-            }
+            for (var i = 0; i < _vertexList.Count; i++)
+                _vertexList[i] = СalculationMatrix(z, _vertexList[i]);
 
-            RotationCenter(e, false, figure);
+            RotationCenter(e, false, points);
         }
 
         //Масштабирование по оси Y относительно центра фигуры
-        private void ZoomY(float zoomY, MouseEventArgs eMouseY)
+        private void ZoomY(float zoomY)
         {
             if (zoomY <= 0) zoomY = -0.1f;
             else zoomY = 0.1f;
@@ -730,15 +738,13 @@ namespace GSK2
                 {0, 0, 1}
             };
             var e = CenterFigure();
-            var figure = _figures[_figures.Count - 1];
-            RotationCenter(e, true, figure);
+            var figure = points[points.Count - 1];
+            RotationCenter(e, true, points);
 
-            for (int i = 0; i < VertexList.Count; i++)
-            {
-                VertexList[i] = СalculatinTheMatrix(z, VertexList[i]);
-            }
+            for (var i = 0; i < _vertexList.Count; i++) 
+                _vertexList[i] = СalculationMatrix(z, _vertexList[i]);
 
-            RotationCenter(e, false, figure);
+            RotationCenter(e, false, points);
         }
 
         #endregion
@@ -765,10 +771,8 @@ namespace GSK2
                     {0, 1, 0},
                     {-center.X, -center.Y, 1}
                 };
-                for (int i = 0; i < points.Count; i++)
-                {
-                    points[i] = СalculatinTheMatrix(toCenter, points[i]);
-                }
+                for (var i = 0; i < points.Count; i++) 
+                    points[i] = СalculationMatrix(toCenter, points[i]);
             }
             else
             {
@@ -779,10 +783,8 @@ namespace GSK2
                     {0, 1, 0},
                     {center.X, center.Y, 1}
                 };
-                for (int i = 0; i < points.Count; i++)
-                {
-                    points[i] = СalculatinTheMatrix(fromCenter, points[i]);
-                }
+                for (var i = 0; i < points.Count; i++) 
+                    points[i] = СalculationMatrix(fromCenter, points[i]);
             }
         }
 
@@ -808,27 +810,25 @@ namespace GSK2
             {
                 if (i < n) k = i + 1;
                 else k = 0;
-                Pi = VertexList[i];
-                Pk = VertexList[k];
-                if ((Pi.Y < mY) && (Pk.Y >= mY) || (Pi.Y >= mY) && (Pk.Y < mY))
-                {
-                    if ((mY - Pi.Y) * (Pk.X - Pi.X) / (Pk.Y - Pi.Y) + Pi.X < mX)
-                        m++;
-                }
+                var pi = _vertexList[i];
+                var pk = _vertexList[k];
+                if ((pi.Y < mY && pk.Y >= mY || pi.Y >= mY && pk.Y < mY) 
+                    && (mY - pi.Y) * (pk.X - pi.X) / (pk.Y - pi.Y) + pi.X < mX)
+                    m++;
             }
 
             if (m % 2 == 1) check = true;
             return check;
         }
-
-
-        // структура описывающая точку в трехмерном пространстве
+        
+        // Класс описывающий точку в двухмерном пространстве
         public class MyPoint
         {
             public float X { get; set; }
             public float Y { get; set; }
             public float Z { get; set; }
             public bool IsFunc { get; set; }
+            public bool HaveTmo { get; set; } // Если над фигурой будет произведено, то ТМО => true
 
             public MyPoint(float x = 0.0f, float y = 0.0f, float z = 1.0f)
             {
@@ -836,6 +836,7 @@ namespace GSK2
                 Y = y;
                 Z = z;
                 IsFunc = false;
+                HaveTmo = false;
             }
 
             public Point ToPoint()
